@@ -1,0 +1,290 @@
+---
+title: "STATS 406, Homework 01"
+author: "Your Name, Your Uniqname"
+date: "Due 2021-05-23 at 10pm (UTC+8)" 
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Working with RMarkdown
+
+- [Markdown basics](https://www.markdownguide.org/basic-syntax/) 
+- [RMarkdown additional details](http://rmarkdown.rstudio.com) 
+- The `Help > Cheatsheets > R Markdown Cheat Sheet` menu option
+- [Cosma Shazili's reference](http://www.stat.cmu.edu/~cshalizi/rmarkdown/#math-in-r-markdown) for math notation. E.g., the Normal distribution PDF:
+\[
+f(x) = \frac{1}{\sqrt{2\pi \sigma^2}} \exp\left\{\left(\frac{x - \mu}{\sigma}\right)^2\right\}
+\]
+
+Make sure that you have the `tidyverse` and `ggplot2` packages installed. You can run the following in your terminal to make sure that these are up to date:
+
+```{r eval = FALSE}
+install.packages(c("tidyverse", "ggplot2"))
+```
+
+After they are installed, the following lines should work without error:
+```{r, results='hide', warning = FALSE, message = FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+## Problem 1 (4 pts)
+
+Consider a random variable $X$ with support $[0, \infty)$ that has the density function
+$$f(x) = a 2^{-\theta x}$$
+where $a$ is some positive constant and $\theta > 0$ is a parameter of the distribution.
+
+### Part (a) (1 pt)
+Find the constant $a$ that makes density function $f$ a proper density function (i.e., $f(x) \ge 0, x \in [0, \infty)$ and obeys the law of total probability).
+
+Hint: Recall that $\exp(\log(y)) = y$, where $\log$ is the natural logarithm.
+
+### Answer:
+As the density function obeys the law of total probability, we have $\int_0^\infty f(x)dx = 1$
+
+$$
+\int_0^\infty a2^{-\theta x}dx = 1\\
+-\frac{a}{\theta} \int_0^\infty 2^{-\theta x}d(-\theta x) = 1\\
+-\frac{a}{\theta}\cdot \frac{1}{\log(2)}\cdot 2^{-\theta x}|_0^{\infty} = 1\\
+\Rightarrow a = \theta \log(2)
+$$
+
+### Part (b) (1 pt)
+
+Find a closed form expression for CDF of the distribution:
+$$F(t) = \int_0^t f(x) \, dx$$
+
+Implement the the CDF as an R function:
+
+```{r}
+F <- function(t, theta) {
+  return (1 - 2^(-theta*t))
+}
+```
+
+When you have implemented `F` above, remove `eval = FALSE` to demonstrate your CDF with $\theta = 1/4$.
+```{r}
+curve(F(x, theta = 1/4), from = 0, to = 30)
+```
+ 
+### Part (c) (1 pt)
+
+For data that are **independent, identically distributed** with density $f$, the likelihood function is given by
+$$L(\theta) = \prod_{i=1}^n f(x_i ; \theta)$$
+
+Here is a vector of $x_i$ values that represent a sample from $f$. 
+```{r}
+x <- c(2.04633020390363, 19.7162495956649, 4.13080370648129, 1.81704122764094, 
+1.95187369091209, 1.33550786159157, 2.51227117915184, 0.845621829601402, 
+0.294167520262539, 1.94874477069653, 0.668953039617229, 9.19826053515684, 
+0.161521415421586, 8.76538255582832, 9.05718407093848, 0.563933559592626, 
+5.40269171511784, 7.4842100539579, 5.70493764112286, 7.94079576949872)
+```
+
+```{r}
+likelihood <- function(theta) {
+  ## you can refer to the variable "x" directly in this function
+  result <- 1
+  for(i in x) {result <- result * theta * log(2) * 2^(-theta * i)}
+  return(result) 
+}
+```
+
+Plot the likelihood for $\theta \in [0, 2]$:
+
+```{r}
+## the "x" below is actually our theta parameter
+## the curve function is a special function that needs an expression involving "x"
+## The "Vectorize" function allows us to take many theta values simultaneously
+curve(Vectorize(likelihood)(x), from = 0, to  = 2)
+```
+
+What do you notice?
+
+### Answer(c)
+After curving, the plot looks like it follows a normal distribution, and the maximum point is about 0.3, the same as we calculate in part (d)
+
+### Part (d) (1 pt)
+
+What is the **maximum likelihood estimator** for $\theta$? Justify your answer formally.
+
+### Answer (d)
+$$
+L(\theta)=\prod_{i=1}^n \theta \,log(2)\cdot 2^{-\theta x_i}
+$$
+Taking the log:
+$$
+l(\theta)=nlog(\theta\, log(2))-\theta\,log(2) \sum_{i=1}^n x_i
+$$
+Taking the derivative and set to zero:
+$$
+\frac{d}{d\theta}l(\theta)=\frac{n}{\theta}-log(2)\sum_{i=1}^n x_i\\
+\Rightarrow \hat{\theta}=\frac{n}{log(2)\sum_{i=1}^n x_i}
+$$
+With the given x in part (c), we can calculate and get the result that $\hat{\theta}=0.315$, roughly equal to the value shown on the curved plot in part (c). 
+
+## Problem 2 (3 pts)
+
+
+In this problem we will write three versions of functions to compute the (sample) mean and (sample) variance a numeric vector. 
+
+Sample mean is defined as
+$$\bar x = \frac{1}{n} \sum_{i = 1}^n x_i$$
+
+Sample variance is defined as 
+$$ S^2 =\frac{1}{n - 1} \sum_{i = 1}^n (x_i - \bar x)^2$$
+
+Demonstrate that you get the same answers as the R built in versions of these functions.
+
+```{r}
+x <- c(30,290,14,88,32,56)
+mean(x) # R's built in mean function 
+var(x) # R's built in variance function 
+```
+
+Hint: to get $n$ in the above equations you can use `length(x)`.
+
+## Part a (1 pt)
+
+This solution should be written using `for` loops to explicitly iterate through `x`.
+
+```{r}
+mean_for <- function(x) {
+  result <- 0
+  for(i in x) {result <- result + i}
+  result <- result / length(x)
+  return(result)  
+}
+
+var_for <- function(x) {
+  v <- 0
+  for(i in x){v <- v + (i - mean_for(x))^2}
+  v <- v / (length(x) - 1)
+  return(v)
+}
+
+mean_for(x)
+var_for(x)
+```
+
+## Part b (1 pt)
+
+This solution should be written using the `map_dbl` and `reduce` functions to handle the iteration.
+
+```{r}
+library(purrr)
+mean_map <- function(x) {
+  sum <- reduce(x, `+`)
+  sum <- sum / length(x)
+  return(sum)  
+}
+
+var_map <- function(x) {
+  fx <- function(y){y <- (y - mean_map(x))^2 / (length(x) - 1)}
+  vec <- map_dbl(x, fx)
+  return(reduce(vec, `+`))
+}
+
+mean_map(x)
+var_map(x)
+```
+
+## Part c (1 pt)
+
+This solution should be written using R's vector math operations and R's `sum` function.
+
+```{r}
+mean_vec <- function(x) {
+  return(sum(x) / length(x))  
+}
+
+var_vec <- function(x) {
+  x <- (x - mean_vec(x))^2 / (length(x) - 1)
+  return(sum(x))
+}
+
+mean_vec(x)
+var_vec(x)
+```
+
+## Problem 3 (3 pts)
+
+Spotify publishes an [API for playlists, tracks, and user data](https://developer.spotify.com/documentation/web-api/). I've already retrieved some data from Spotify, included in the the `tracks.rda` file included with this homework. One neat aspect of Spotify's data is the [audio features](https://developer.spotify.com/documentation/web-api/reference/tracks/get-several-audio-features/). These features rate tracks on many qualities such as "danceability" or whether the track seems to be "acoustic." We will investigate the relationships between these qualities for nearly 1000 tracks.
+
+To use the data, place `tracks.rda` in the same directory as this file. Before knitting this file, use the `Session -> Set Working Directory -> To Source File Location` menu so that following line will load the data and display a few of the columns in the table.
+```{r}
+track <- load("tracks.rda")
+knitr::kable(tracks[c(1,2,335), c("track.album.name", "track.name", "danceability", "energy", "key", "loudness", "mode")])
+```
+```{r}
+dim(tracks)
+#dim(tracks)[1]
+#d <- tracks[13, "track.artists"]
+#d[[1]]["name"][[1]]
+
+```
+### Part a (1 pt)
+
+We'll start by just getting a feeling for the data by answering the following questions.
+
+- What is the mean danceability score of all tracks?
+- For tracks with danceability above the mean, what is the median duration?
+- For each key, summarize mean loudness level? (Hint: use the `group_by` and `summarize` functions.)
+
+### Answer (a)
+1. The mean danceability can be calculated as:
+```{r}
+m <- mean(tracks[c(1:dim(tracks)[1]), c("danceability")])
+show(m)
+```
+2. The median duration would be calculated in the code below:
+```{r}
+mdn <- c()
+for(i in c(1:dim(tracks)[1])){
+  if(tracks[i, "danceability"] > m) {
+    mdn <- append(mdn, tracks[i, "duration_ms"])
+  }
+}
+median(mdn)
+```
+3. 
+```{r}
+library(dplyr)
+data <- group_by(tracks, key)
+s <- summarize(data, mean_loudness = mean(loudness))
+show(s)
+```
+
+### Part b (1 pt)
+
+Since tracks can have multiple artists, the "track.artists" column is composed of lists with information on each artist that contributes to the track. To make display a little easier, your first task is to create a new column for the `tracks` that just display's all the artists as a single bit of text. To demonstrate your results, create the previous table with the addition of the artist names. 
+
+Some useful functions:
+
+- `mutate` will return a new table with one or more new columns added
+- `map_chr` will iterate across a list or vector and return text ("character vector" in R terminology). ([More information on `map` functions](https://r4ds.had.co.nz/iteration.html#the-map-functions).)
+- `paste` will join its arguments into a single character vector. See the `collapse` argument in particular.
+
+### Answer (b)
+```{r}
+artists <- mutate(tracks, Artists = map_chr(tracks[["track.artists"]], function(n){paste(n[["name"]], collapse = ",")}))
+artists[["Artists"]]
+```
+
+### Part c (1 pts)
+
+Prepare a plot that displays interesting features from the tracks data ([see the plotting chapter of R for Data Science](https://r4ds.had.co.nz/data-visualisation.html#introduction-1) for a basic tutorial on plotting). Give particular attention to  how your plot uses coordinates, points, lines, shapes, and the visual variables of size, value, texture, color, orientation, and shape ([here's a chart showing the variables in action](https://www.axismaps.com/guide/general/visual-variables/)). You do not need to include all types of graphical variables in your plot. 
+
+Provide a brief discussion of the visual variables you use and what aspects of the data these variables communicate. Additionally, either draw conclusions or discuss questions generated from your plot. 
+
+### Answer (c)
+```{r}
+ggplot(data = tracks, aes(x = key, y = loudness)) + geom_point()
+ggplot(data = tracks, aes(x = danceability, y = track.popularity, size = key, color = loudness)) + geom_point()
+```
+The first plot shows the loudness according to different keys of the tracks. We can find that for all the key values, the most common loudness are greater than -10, and the loudness lower than -20 only exists a little.
+
+The second plot is a scatter plot showing the relation between track's popularity and its danceability. I set the key of each track to indicate the size of each dot, and the loudness to show the color, the lower loudness is, the darker the corresponding dot is. We can obviously see that popularity and danceability don't show some kind of relationship. However, most of the tracks have danceability between 0.25-1.00, and popularity between 25 and 100. Furthermore, we can easily find out that the lower the loudness is, the lower the corresponding dancebility and popularity are, to a great extent.

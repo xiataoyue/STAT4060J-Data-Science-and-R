@@ -1,0 +1,652 @@
+Series.Name,Country.Name,Value
+GDP (current US$),Afghanistan,20484885119.7348
+GDP (current US$),Albania,13228247844.1247
+GDP (current US$),Algeria,213810022462.428
+GDP (current US$),American Samoa,643000000
+GDP (current US$),Andorra,3350736367.25488
+GDP (current US$),Angola,145712200312.505
+GDP (current US$),Antigua and Barbuda,1275576784.44444
+GDP (current US$),Argentina,526319673731.638
+GDP (current US$),Armenia,11609512939.7543
+GDP (current US$),Aruba,2649720670.39106
+GDP (current US$),Australia,1464955475993.76
+GDP (current US$),Austria,441885415805.825
+GDP (current US$),Azerbaijan,75244294275.1498
+GDP (current US$),"Bahamas, The",10957300000
+GDP (current US$),Bahrain,33387712765.9575
+GDP (current US$),Bangladesh,172885454931.453
+GDP (current US$),Barbados,4608350000
+GDP (current US$),Belarus,78813839984.3506
+GDP (current US$),Belgium,530770977633.615
+GDP (current US$),Belize,1692955750
+GDP (current US$),Benin,9707432015.61441
+GDP (current US$),Bermuda,"NA"
+GDP (current US$),Bhutan,1958819095.68324
+GDP (current US$),Bolivia,32996187988.4226
+GDP (current US$),Bosnia and Herzegovina,18558343508.3435
+GDP (current US$),Botswana,16250750259.0212
+GDP (current US$),Brazil,2455993625159.37
+GDP (current US$),British Virgin Islands,"NA"
+GDP (current US$),Brunei Darussalam,17098342541.4365
+GDP (current US$),Bulgaria,56814543481.2102
+GDP (current US$),Burkina Faso,12377391462.6377
+GDP (current US$),Burundi,2705783272.07443
+GDP (current US$),Cabo Verde,1859898513.26858
+GDP (current US$),Cambodia,16702610842.4025
+GDP (current US$),Cameroon,34942948737.3967
+GDP (current US$),Canada,1799268695861.8
+GDP (current US$),Cayman Islands,"NA"
+GDP (current US$),Central African Republic,1702899386.14322
+GDP (current US$),Chad,13922223233.5184
+GDP (current US$),Channel Islands,"NA"
+GDP (current US$),Chile,260584090570.988
+GDP (current US$),China,10482372109961.9
+GDP (current US$),Colombia,381112119657.445
+GDP (current US$),Comoros,1148058015.47633
+GDP (current US$),"Congo, Dem. Rep.",35909040265.9328
+GDP (current US$),"Congo, Rep.",14177437982.2619
+GDP (current US$),Costa Rica,50577769837.691
+GDP (current US$),Cote d'Ivoire,35343298113.5131
+GDP (current US$),Croatia,57671307486.8132
+GDP (current US$),Cuba,80656000000
+GDP (current US$),Curacao,"NA"
+GDP (current US$),Cyprus,23364707443.2798
+GDP (current US$),Czech Republic,207818330723.835
+GDP (current US$),Denmark,352993633221.281
+GDP (current US$),Djibouti,1455035088.74594
+GDP (current US$),Dominica,523540777.777778
+GDP (current US$),Dominican Republic,66065015410.0468
+GDP (current US$),Ecuador,101726331000
+GDP (current US$),"Egypt, Arab Rep.",305529656458.438
+GDP (current US$),El Salvador,22585841200
+GDP (current US$),Equatorial Guinea,21736500712.9638
+GDP (current US$),Eritrea,"NA"
+GDP (current US$),Estonia,26224622450.8302
+GDP (current US$),Eswatini,4377293816.28535
+GDP (current US$),Ethiopia,55612228233.5179
+GDP (current US$),Faroe Islands,2810547884.18708
+GDP (current US$),Fiji,4483416339.93854
+GDP (current US$),Finland,272609288689.575
+GDP (current US$),France,2852165760630.27
+GDP (current US$),French Polynesia,"NA"
+GDP (current US$),Gabon,18179752009.7489
+GDP (current US$),"Gambia, The",1259063629.83287
+GDP (current US$),Georgia,16509305828.9648
+GDP (current US$),Germany,3890606893346.69
+GDP (current US$),Ghana,53601126663.9079
+GDP (current US$),Gibraltar,"NA"
+GDP (current US$),Greece,237029579260.722
+GDP (current US$),Greenland,2837737193.76392
+GDP (current US$),Grenada,911497407.407407
+GDP (current US$),Guam,5538000000
+GDP (current US$),Guatemala,58722323918.1604
+GDP (current US$),Guinea,8778473640.90839
+GDP (current US$),Guinea-Bissau,1053512334.17271
+GDP (current US$),Guyana,3077643261.39312
+GDP (current US$),Haiti,8776350789.5993
+GDP (current US$),Honduras,19756494434.7031
+GDP (current US$),"Hong Kong SAR, China",291459356985.337
+GDP (current US$),Hungary,140118140454.711
+GDP (current US$),Iceland,17304033020.5364
+GDP (current US$),India,2039127446298.55
+GDP (current US$),Indonesia,890814755233.225
+GDP (current US$),"Iran, Islamic Rep.",434474616831.914
+GDP (current US$),Iraq,234648370497.427
+GDP (current US$),Ireland,258099014042.117
+GDP (current US$),Isle of Man,7428280401.5139
+GDP (current US$),Israel,308416982140.362
+GDP (current US$),Italy,2151732868243.21
+GDP (current US$),Jamaica,13852192273.1357
+GDP (current US$),Japan,4850413536037.84
+GDP (current US$),Jordan,35826925774.6479
+GDP (current US$),Kazakhstan,221415572819.5
+GDP (current US$),Kenya,61448041564.0191
+GDP (current US$),Kiribati,179703443.302686
+GDP (current US$),"Korea, Dem. People’s Rep.","NA"
+GDP (current US$),"Korea, Rep.",1411333926201.24
+GDP (current US$),Kosovo,7386891336.07536
+GDP (current US$),Kuwait,162631412508.784
+GDP (current US$),Kyrgyz Republic,7468096566.71158
+GDP (current US$),Lao PDR,13268458231.9284
+GDP (current US$),Latvia,31335013751.5424
+GDP (current US$),Lebanon,48524603055.257
+GDP (current US$),Lesotho,2614566294.19462
+GDP (current US$),Liberia,3144000000
+GDP (current US$),Libya,41142722414.3351
+GDP (current US$),Liechtenstein,6657170923.37918
+GDP (current US$),Lithuania,48516371720.8346
+GDP (current US$),Luxembourg,66327344188.889
+GDP (current US$),"Macao SAR, China",55347998647.8196
+GDP (current US$),Madagascar,10673516672.6664
+GDP (current US$),Malawi,6047813437.31804
+GDP (current US$),Malaysia,338061963396.376
+GDP (current US$),Maldives,3697351596.83753
+GDP (current US$),Mali,14345828992.0411
+GDP (current US$),Malta,11216758081.9535
+GDP (current US$),Marshall Islands,183121300
+GDP (current US$),Mauritania,5391475277.24326
+GDP (current US$),Mauritius,12803445933.5894
+GDP (current US$),Mexico,1314563967425.24
+GDP (current US$),"Micronesia, Fed. Sts.",317999400
+GDP (current US$),Moldova,7983241044.20189
+GDP (current US$),Monaco,7060236168.2367
+GDP (current US$),Mongolia,12226514722.0861
+GDP (current US$),Montenegro,4587926230.59573
+GDP (current US$),Morocco,110081248587.369
+GDP (current US$),Mozambique,16961117243.491
+GDP (current US$),Myanmar,65446199787.8425
+GDP (current US$),Namibia,12786078008.2376
+GDP (current US$),Nauru,117020381.931693
+GDP (current US$),Nepal,20002968837.9471
+GDP (current US$),Netherlands,879635084124.987
+GDP (current US$),New Caledonia,"NA"
+GDP (current US$),New Zealand,200955119873.905
+GDP (current US$),Nicaragua,11880438824.4494
+GDP (current US$),Niger,8229731383.7693
+GDP (current US$),Nigeria,568498937615.594
+GDP (current US$),North Macedonia,11362272837.8818
+GDP (current US$),Northern Mariana Islands,845000000
+GDP (current US$),Norway,499338534779.159
+GDP (current US$),Oman,81076723016.9051
+GDP (current US$),Pakistan,244360888750.807
+GDP (current US$),Palau,245675100
+GDP (current US$),Panama,49921464365.3204
+GDP (current US$),Papua New Guinea,23060047127.6509
+GDP (current US$),Paraguay,40276532540.8812
+GDP (current US$),Peru,201080662205.002
+GDP (current US$),Philippines,284584522898.872
+GDP (current US$),Poland,545285410921.999
+GDP (current US$),Portugal,229629822121.601
+GDP (current US$),Puerto Rico,102445800000
+GDP (current US$),Qatar,206224725274.725
+GDP (current US$),Romania,199626806401.529
+GDP (current US$),Russian Federation,2063662665172.51
+GDP (current US$),Rwanda,8016591927.65923
+GDP (current US$),Samoa,805162571.787264
+GDP (current US$),San Marino,1788510017.24824
+GDP (current US$),Sao Tome and Principe,348941715.374951
+GDP (current US$),Saudi Arabia,756350347333.334
+GDP (current US$),Senegal,19770919167.0965
+GDP (current US$),Serbia,44210806365.6817
+GDP (current US$),Seychelles,1343010475.37046
+GDP (current US$),Sierra Leone,5015157815.73406
+GDP (current US$),Singapore,311539499644.858
+GDP (current US$),Sint Maarten (Dutch part),"NA"
+GDP (current US$),Slovak Republic,100948236941.182
+GDP (current US$),Slovenia,49904928335.3069
+GDP (current US$),Solomon Islands,1172268300.95047
+GDP (current US$),Somalia,6562001351.4788
+GDP (current US$),South Africa,350636208163.772
+GDP (current US$),South Sudan,15099661016.9492
+GDP (current US$),Spain,1376910811040.88
+GDP (current US$),Sri Lanka,79356449840.8881
+GDP (current US$),St. Kitts and Nevis,916857359.52963
+GDP (current US$),St. Lucia,1516576962.96296
+GDP (current US$),St. Martin (French part),"NA"
+GDP (current US$),St. Vincent and the Grenadines,727714407.111622
+GDP (current US$),Sudan,82151588418.8325
+GDP (current US$),Suriname,5235212205.60635
+GDP (current US$),Sweden,573817719109.402
+GDP (current US$),Switzerland,709182559935.301
+GDP (current US$),Syrian Arab Republic,"NA"
+GDP (current US$),Tajikistan,9236309138.04277
+GDP (current US$),Tanzania,48219739330.6593
+GDP (current US$),Thailand,407339361695.577
+GDP (current US$),Timor-Leste,4045400000
+GDP (current US$),Togo,4568900619.92456
+GDP (current US$),Tonga,443911052.254042
+GDP (current US$),Trinidad and Tobago,27200280855.0476
+GDP (current US$),Tunisia,47632326088.237
+GDP (current US$),Turkey,934185972127.028
+GDP (current US$),Turkmenistan,43524210526.3158
+GDP (current US$),Turks and Caicos Islands,"NA"
+GDP (current US$),Tuvalu,37290587.4998681
+GDP (current US$),Uganda,27291879819.3622
+GDP (current US$),Ukraine,133503411375.739
+GDP (current US$),United Arab Emirates,403137100068.073
+GDP (current US$),United Kingdom,3022827781881.39
+GDP (current US$),United States,17427609000000
+GDP (current US$),Uruguay,57236013086.1223
+GDP (current US$),Uzbekistan,63067077178.5381
+GDP (current US$),Vanuatu,814954306.971033
+GDP (current US$),"Venezuela, RB",482359318767.703
+GDP (current US$),Vietnam,186204652922.262
+GDP (current US$),Virgin Islands (U.S.),3622000000
+GDP (current US$),West Bank and Gaza,12715600000
+GDP (current US$),"Yemen, Rep.",43228583935.0365
+GDP (current US$),Zambia,27150630607.2032
+GDP (current US$),Zimbabwe,19495519600
+"Population, total",Afghanistan,32758020
+"Population, total",Albania,2889104
+"Population, total",Algeria,39113313
+"Population, total",American Samoa,55437
+"Population, total",Andorra,79223
+"Population, total",Angola,26920466
+"Population, total",Antigua and Barbuda,98875
+"Population, total",Argentina,42981515
+"Population, total",Armenia,2906220
+"Population, total",Aruba,103795
+"Population, total",Australia,23504138
+"Population, total",Austria,8546356
+"Population, total",Azerbaijan,9535079
+"Population, total","Bahamas, The",382169
+"Population, total",Bahrain,1336397
+"Population, total",Bangladesh,159405279
+"Population, total",Barbados,283385
+"Population, total",Belarus,9474511
+"Population, total",Belgium,11209057
+"Population, total",Belize,351694
+"Population, total",Benin,10286712
+"Population, total",Bermuda,65139
+"Population, total",Bhutan,776448
+"Population, total",Bolivia,10562159
+"Population, total",Bosnia and Herzegovina,3566002
+"Population, total",Botswana,2168573
+"Population, total",Brazil,204213133
+"Population, total",British Virgin Islands,29588
+"Population, total",Brunei Darussalam,411704
+"Population, total",Bulgaria,7223938
+"Population, total",Burkina Faso,17585977
+"Population, total",Burundi,9891790
+"Population, total",Cabo Verde,526437
+"Population, total",Cambodia,15270790
+"Population, total",Cameroon,22239904
+"Population, total",Canada,35535348
+"Population, total",Cayman Islands,59172
+"Population, total",Central African Republic,4515392
+"Population, total",Chad,13569438
+"Population, total",Channel Islands,162969
+"Population, total",Chile,17613798
+"Population, total",China,1364270000
+"Population, total",Colombia,47791911
+"Population, total",Comoros,759385
+"Population, total","Congo, Dem. Rep.",73722860
+"Population, total","Congo, Rep.",4871101
+"Population, total",Costa Rica,4757575
+"Population, total",Cote d'Ivoire,22531350
+"Population, total",Croatia,4238389
+"Population, total",Cuba,11439767
+"Population, total",Curacao,155909
+"Population, total",Cyprus,1152309
+"Population, total",Czech Republic,10525347
+"Population, total",Denmark,5643475
+"Population, total",Djibouti,912164
+"Population, total",Dominica,72778
+"Population, total",Dominican Republic,10405844
+"Population, total",Ecuador,15903112
+"Population, total","Egypt, Arab Rep.",91812566
+"Population, total",El Salvador,6281189
+"Population, total",Equatorial Guinea,1129424
+"Population, total",Eritrea,"NA"
+"Population, total",Estonia,1314545
+"Population, total",Eswatini,1295097
+"Population, total",Ethiopia,97366774
+"Population, total",Faroe Islands,48842
+"Population, total",Fiji,885806
+"Population, total",Finland,5461512
+"Population, total",France,66316092
+"Population, total",French Polynesia,275484
+"Population, total",Gabon,1875713
+"Population, total","Gambia, The",1917852
+"Population, total",Georgia,3727000
+"Population, total",Germany,80982500
+"Population, total",Ghana,26962563
+"Population, total",Gibraltar,34038
+"Population, total",Greece,10892413
+"Population, total",Greenland,56295
+"Population, total",Grenada,106360
+"Population, total",Guam,160967
+"Population, total",Guatemala,15923559
+"Population, total",Guinea,11805509
+"Population, total",Guinea-Bissau,1725744
+"Population, total",Guyana,763393
+"Population, total",Haiti,10572466
+"Population, total",Honduras,8809216
+"Population, total","Hong Kong SAR, China",7229500
+"Population, total",Hungary,9866468
+"Population, total",Iceland,327386
+"Population, total",India,1293859294
+"Population, total",Indonesia,255131116
+"Population, total","Iran, Islamic Rep.",78411092
+"Population, total",Iraq,35006080
+"Population, total",Ireland,4657740
+"Population, total",Isle of Man,82590
+"Population, total",Israel,8215700
+"Population, total",Italy,60789140
+"Population, total",Jamaica,2862087
+"Population, total",Japan,127276000
+"Population, total",Jordan,8809306
+"Population, total",Kazakhstan,17288285
+"Population, total",Kenya,46024250
+"Population, total",Kiribati,110458
+"Population, total","Korea, Dem. People’s Rep.",25116363
+"Population, total","Korea, Rep.",50746659
+"Population, total",Kosovo,1821800
+"Population, total",Kuwait,3782450
+"Population, total",Kyrgyz Republic,5835500
+"Population, total",Lao PDR,6576397
+"Population, total",Latvia,1993782
+"Population, total",Lebanon,5603279
+"Population, total",Lesotho,2145785
+"Population, total",Liberia,4390737
+"Population, total",Libya,6204108
+"Population, total",Liechtenstein,37127
+"Population, total",Lithuania,2932367
+"Population, total",Luxembourg,556319
+"Population, total","Macao SAR, China",588781
+"Population, total",Madagascar,23589801
+"Population, total",Malawi,17068838
+"Population, total",Malaysia,30228017
+"Population, total",Maldives,408247
+"Population, total",Mali,16962846
+"Population, total",Malta,434558
+"Population, total",Marshall Islands,52898
+"Population, total",Mauritania,4063920
+"Population, total",Mauritius,1260934
+"Population, total",Mexico,124221600
+"Population, total","Micronesia, Fed. Sts.",104015
+"Population, total",Moldova,3556397
+"Population, total",Monaco,38132
+"Population, total",Mongolia,2923896
+"Population, total",Montenegro,621810
+"Population, total",Morocco,34318082
+"Population, total",Mozambique,27212382
+"Population, total",Myanmar,51924182
+"Population, total",Namibia,2370992
+"Population, total",Nauru,11853
+"Population, total",Nepal,28323241
+"Population, total",Netherlands,16865008
+"Population, total",New Caledonia,268050
+"Population, total",New Zealand,4509700
+"Population, total",Nicaragua,6013997
+"Population, total",Niger,19148219
+"Population, total",Nigeria,176460502
+"Population, total",North Macedonia,2077495
+"Population, total",Northern Mariana Islands,54468
+"Population, total",Norway,5137232
+"Population, total",Oman,3960925
+"Population, total",Pakistan,185546257
+"Population, total",Palau,21094
+"Population, total",Panama,3903986
+"Population, total",Papua New Guinea,7755785
+"Population, total",Paraguay,6552584
+"Population, total",Peru,30973354
+"Population, total",Philippines,100102249
+"Population, total",Poland,38011735
+"Population, total",Portugal,10401062
+"Population, total",Puerto Rico,3534874
+"Population, total",Qatar,2374419
+"Population, total",Romania,19908979
+"Population, total",Russian Federation,143819666
+"Population, total",Rwanda,11345357
+"Population, total",Samoa,192290
+"Population, total",San Marino,32657
+"Population, total",Sao Tome and Principe,191266
+"Population, total",Saudi Arabia,30776722
+"Population, total",Senegal,14546111
+"Population, total",Serbia,7130576
+"Population, total",Seychelles,91359
+"Population, total",Sierra Leone,7079162
+"Population, total",Singapore,5469724
+"Population, total",Sint Maarten (Dutch part),37685
+"Population, total",Slovak Republic,5418649
+"Population, total",Slovenia,2061980
+"Population, total",Solomon Islands,575504
+"Population, total",Somalia,13513125
+"Population, total",South Africa,54539571
+"Population, total",South Sudan,11530971
+"Population, total",Spain,46480882
+"Population, total",Sri Lanka,20771000
+"Population, total",St. Kitts and Nevis,53739
+"Population, total",St. Lucia,176421
+"Population, total",St. Martin (French part),31530
+"Population, total",St. Vincent and the Grenadines,109357
+"Population, total",Sudan,37737913
+"Population, total",Suriname,547928
+"Population, total",Sweden,9696110
+"Population, total",Switzerland,8188649
+"Population, total",Syrian Arab Republic,19203090
+"Population, total",Tajikistan,8362745
+"Population, total",Tanzania,52234869
+"Population, total",Thailand,68416772
+"Population, total",Timor-Leste,1212814
+"Population, total",Togo,7228915
+"Population, total",Tonga,105782
+"Population, total",Trinidad and Tobago,1354493
+"Population, total",Tunisia,11143908
+"Population, total",Turkey,77030628
+"Population, total",Turkmenistan,5466241
+"Population, total",Turks and Caicos Islands,33739
+"Population, total",Tuvalu,10908
+"Population, total",Uganda,38833338
+"Population, total",Ukraine,45271947
+"Population, total",United Arab Emirates,9070867
+"Population, total",United Kingdom,64613160
+"Population, total",United States,318622525
+"Population, total",Uruguay,3419546
+"Population, total",Uzbekistan,30757700
+"Population, total",Vanuatu,258850
+"Population, total","Venezuela, RB",30738378
+"Population, total",Vietnam,92544915
+"Population, total",Virgin Islands (U.S.),107884
+"Population, total",West Bank and Gaza,4294682
+"Population, total","Yemen, Rep.",26246327
+"Population, total",Zambia,15620974
+"Population, total",Zimbabwe,15411675
+CO2 emissions (kt),Afghanistan,9809.225
+CO2 emissions (kt),Albania,5716.853
+CO2 emissions (kt),Algeria,145400.217
+CO2 emissions (kt),American Samoa,"NA"
+CO2 emissions (kt),Andorra,462.042
+CO2 emissions (kt),Angola,34763.16
+CO2 emissions (kt),Antigua and Barbuda,531.715
+CO2 emissions (kt),Argentina,204024.546
+CO2 emissions (kt),Armenia,5529.836
+CO2 emissions (kt),Aruba,872.746
+CO2 emissions (kt),Australia,361261.839
+CO2 emissions (kt),Austria,58712.337
+CO2 emissions (kt),Azerbaijan,37487.741
+CO2 emissions (kt),"Bahamas, The",2416.553
+CO2 emissions (kt),Bahrain,31338.182
+CO2 emissions (kt),Bangladesh,73189.653
+CO2 emissions (kt),Barbados,1272.449
+CO2 emissions (kt),Belarus,63497.772
+CO2 emissions (kt),Belgium,93350.819
+CO2 emissions (kt),Belize,495.045
+CO2 emissions (kt),Benin,6318.241
+CO2 emissions (kt),Bermuda,575.719
+CO2 emissions (kt),Bhutan,1001.091
+CO2 emissions (kt),Bolivia,20410.522
+CO2 emissions (kt),Bosnia and Herzegovina,22233.021
+CO2 emissions (kt),Botswana,7033.306
+CO2 emissions (kt),Brazil,529808.16
+CO2 emissions (kt),British Virgin Islands,179.683
+CO2 emissions (kt),Brunei Darussalam,9108.828
+CO2 emissions (kt),Bulgaria,42416.189
+CO2 emissions (kt),Burkina Faso,2849.259
+CO2 emissions (kt),Burundi,440.04
+CO2 emissions (kt),Cabo Verde,491.378
+CO2 emissions (kt),Cambodia,6684.941
+CO2 emissions (kt),Cameroon,7003.97
+CO2 emissions (kt),Canada,537193.498
+CO2 emissions (kt),Cayman Islands,542.716
+CO2 emissions (kt),Central African Republic,300.694
+CO2 emissions (kt),Chad,729.733
+CO2 emissions (kt),Channel Islands,"NA"
+CO2 emissions (kt),Chile,82562.505
+CO2 emissions (kt),China,10291926.878
+CO2 emissions (kt),Colombia,84091.644
+CO2 emissions (kt),Comoros,154.014
+CO2 emissions (kt),"Congo, Dem. Rep.",4671.758
+CO2 emissions (kt),"Congo, Rep.",3094.948
+CO2 emissions (kt),Costa Rica,7759.372
+CO2 emissions (kt),Cote d'Ivoire,11045.004
+CO2 emissions (kt),Croatia,16842.531
+CO2 emissions (kt),Cuba,34836.5
+CO2 emissions (kt),Curacao,5881.868
+CO2 emissions (kt),Cyprus,6061.551
+CO2 emissions (kt),Czech Republic,96475.103
+CO2 emissions (kt),Denmark,33498.045
+CO2 emissions (kt),Djibouti,722.399
+CO2 emissions (kt),Dominica,135.679
+CO2 emissions (kt),Dominican Republic,21539.958
+CO2 emissions (kt),Ecuador,43919.659
+CO2 emissions (kt),"Egypt, Arab Rep.",201894.019
+CO2 emissions (kt),El Salvador,6285.238
+CO2 emissions (kt),Equatorial Guinea,5346.486
+CO2 emissions (kt),Eritrea,696.73
+CO2 emissions (kt),Estonia,19519.441
+CO2 emissions (kt),Eswatini,1202.776
+CO2 emissions (kt),Ethiopia,11598.721
+CO2 emissions (kt),Faroe Islands,597.721
+CO2 emissions (kt),Fiji,1169.773
+CO2 emissions (kt),Finland,47300.633
+CO2 emissions (kt),France,303275.568
+CO2 emissions (kt),French Polynesia,803.073
+CO2 emissions (kt),Gabon,5192.472
+CO2 emissions (kt),"Gambia, The",513.38
+CO2 emissions (kt),Georgia,8987.817
+CO2 emissions (kt),Germany,719883.438
+CO2 emissions (kt),Ghana,14466.315
+CO2 emissions (kt),Gibraltar,528.048
+CO2 emissions (kt),Greece,67318.786
+CO2 emissions (kt),Greenland,506.046
+CO2 emissions (kt),Grenada,242.022
+CO2 emissions (kt),Guam,"NA"
+CO2 emissions (kt),Guatemala,18327.666
+CO2 emissions (kt),Guinea,2449.556
+CO2 emissions (kt),Guinea-Bissau,271.358
+CO2 emissions (kt),Guyana,2009.516
+CO2 emissions (kt),Haiti,2860.26
+CO2 emissions (kt),Honduras,9471.861
+CO2 emissions (kt),"Hong Kong SAR, China",46222.535
+CO2 emissions (kt),Hungary,42086.159
+CO2 emissions (kt),Iceland,1983.847
+CO2 emissions (kt),India,2238377.137
+CO2 emissions (kt),Indonesia,464176.194
+CO2 emissions (kt),"Iran, Islamic Rep.",649480.705
+CO2 emissions (kt),Iraq,168443.645
+CO2 emissions (kt),Ireland,34066.43
+CO2 emissions (kt),Isle of Man,"NA"
+CO2 emissions (kt),Israel,64601.539
+CO2 emissions (kt),Italy,320411.459
+CO2 emissions (kt),Jamaica,7422.008
+CO2 emissions (kt),Japan,1214048.358
+CO2 emissions (kt),Jordan,26450.071
+CO2 emissions (kt),Kazakhstan,248314.572
+CO2 emissions (kt),Kenya,14286.632
+CO2 emissions (kt),Kiribati,62.339
+CO2 emissions (kt),"Korea, Dem. People’s Rep.",40527.684
+CO2 emissions (kt),"Korea, Rep.",587156.373
+CO2 emissions (kt),Kosovo,"NA"
+CO2 emissions (kt),Kuwait,95408.006
+CO2 emissions (kt),Kyrgyz Republic,9607.54
+CO2 emissions (kt),Lao PDR,1954.511
+CO2 emissions (kt),Latvia,6974.634
+CO2 emissions (kt),Lebanon,24070.188
+CO2 emissions (kt),Lesotho,2467.891
+CO2 emissions (kt),Liberia,935.085
+CO2 emissions (kt),Libya,56996.181
+CO2 emissions (kt),Liechtenstein,44.004
+CO2 emissions (kt),Lithuania,12838.167
+CO2 emissions (kt),Luxembourg,9658.878
+CO2 emissions (kt),"Macao SAR, China",1283.45
+CO2 emissions (kt),Madagascar,3076.613
+CO2 emissions (kt),Malawi,1276.116
+CO2 emissions (kt),Malaysia,242821.406
+CO2 emissions (kt),Maldives,1334.788
+CO2 emissions (kt),Mali,1411.795
+CO2 emissions (kt),Malta,2346.88
+CO2 emissions (kt),Marshall Islands,102.676
+CO2 emissions (kt),Mauritania,2709.913
+CO2 emissions (kt),Mauritius,4228.051
+CO2 emissions (kt),Mexico,480270.657
+CO2 emissions (kt),"Micronesia, Fed. Sts.",150.347
+CO2 emissions (kt),Moldova,4932.115
+CO2 emissions (kt),Monaco,"NA"
+CO2 emissions (kt),Mongolia,20839.561
+CO2 emissions (kt),Montenegro,2211.201
+CO2 emissions (kt),Morocco,59863.775
+CO2 emissions (kt),Mozambique,8426.766
+CO2 emissions (kt),Myanmar,21631.633
+CO2 emissions (kt),Namibia,3755.008
+CO2 emissions (kt),Nauru,47.671
+CO2 emissions (kt),Nepal,8030.73
+CO2 emissions (kt),Netherlands,167303.208
+CO2 emissions (kt),New Caledonia,4290.39
+CO2 emissions (kt),New Zealand,34664.151
+CO2 emissions (kt),Nicaragua,4862.442
+CO2 emissions (kt),Niger,2126.86
+CO2 emissions (kt),Nigeria,96280.752
+CO2 emissions (kt),North Macedonia,7510.016
+CO2 emissions (kt),Northern Mariana Islands,"NA"
+CO2 emissions (kt),Norway,47626.996
+CO2 emissions (kt),Oman,61169.227
+CO2 emissions (kt),Pakistan,166298.45
+CO2 emissions (kt),Palau,260.357
+CO2 emissions (kt),Panama,8800.8
+CO2 emissions (kt),Papua New Guinea,6318.241
+CO2 emissions (kt),Paraguay,5702.185
+CO2 emissions (kt),Peru,61744.946
+CO2 emissions (kt),Philippines,105653.604
+CO2 emissions (kt),Poland,285739.974
+CO2 emissions (kt),Portugal,45052.762
+CO2 emissions (kt),Puerto Rico,"NA"
+CO2 emissions (kt),Qatar,107853.804
+CO2 emissions (kt),Romania,70003.03
+CO2 emissions (kt),Russian Federation,1705345.684
+CO2 emissions (kt),Rwanda,839.743
+CO2 emissions (kt),Samoa,198.018
+CO2 emissions (kt),San Marino,"NA"
+CO2 emissions (kt),Sao Tome and Principe,113.677
+CO2 emissions (kt),Saudi Arabia,601046.969
+CO2 emissions (kt),Senegal,8855.805
+CO2 emissions (kt),Serbia,37667.424
+CO2 emissions (kt),Seychelles,495.045
+CO2 emissions (kt),Sierra Leone,1309.119
+CO2 emissions (kt),Singapore,56372.791
+CO2 emissions (kt),Sint Maarten (Dutch part),733.4
+CO2 emissions (kt),Slovak Republic,30678.122
+CO2 emissions (kt),Slovenia,12812.498
+CO2 emissions (kt),Solomon Islands,201.685
+CO2 emissions (kt),Somalia,608.722
+CO2 emissions (kt),South Africa,489771.854
+CO2 emissions (kt),South Sudan,1496.136
+CO2 emissions (kt),Spain,233976.602
+CO2 emissions (kt),Sri Lanka,18393.672
+CO2 emissions (kt),St. Kitts and Nevis,231.021
+CO2 emissions (kt),St. Lucia,407.037
+CO2 emissions (kt),St. Martin (French part),"NA"
+CO2 emissions (kt),St. Vincent and the Grenadines,209.019
+CO2 emissions (kt),Sudan,15364.73
+CO2 emissions (kt),Suriname,1991.181
+CO2 emissions (kt),Sweden,43420.947
+CO2 emissions (kt),Switzerland,35305.876
+CO2 emissions (kt),Syrian Arab Republic,30703.791
+CO2 emissions (kt),Tajikistan,5188.805
+CO2 emissions (kt),Tanzania,11562.051
+CO2 emissions (kt),Thailand,316212.744
+CO2 emissions (kt),Timor-Leste,469.376
+CO2 emissions (kt),Togo,2621.905
+CO2 emissions (kt),Tonga,121.011
+CO2 emissions (kt),Trinidad and Tobago,46273.873
+CO2 emissions (kt),Tunisia,28829.954
+CO2 emissions (kt),Turkey,345981.45
+CO2 emissions (kt),Turkmenistan,68422.553
+CO2 emissions (kt),Turks and Caicos Islands,205.352
+CO2 emissions (kt),Tuvalu,11.001
+CO2 emissions (kt),Uganda,5229.142
+CO2 emissions (kt),Ukraine,227298.995
+CO2 emissions (kt),United Arab Emirates,211369.547
+CO2 emissions (kt),United Kingdom,419820.162
+CO2 emissions (kt),United States,5254279.285
+CO2 emissions (kt),Uruguay,6747.28
+CO2 emissions (kt),Uzbekistan,105213.564
+CO2 emissions (kt),Vanuatu,154.014
+CO2 emissions (kt),"Venezuela, RB",185220.17
+CO2 emissions (kt),Vietnam,166910.839
+CO2 emissions (kt),Virgin Islands (U.S.),"NA"
+CO2 emissions (kt),West Bank and Gaza,"NA"
+CO2 emissions (kt),"Yemen, Rep.",22698.73
+CO2 emissions (kt),Zambia,4503.076
+CO2 emissions (kt),Zimbabwe,12020.426

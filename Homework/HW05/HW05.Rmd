@@ -1,0 +1,255 @@
+---
+title: "HW 05"
+author: "Taoyue Xia"
+date: "Due June 20, 11:59pm" 
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+set.seed(303203)
+```
+
+
+## Question 1 (3 pts)
+
+For this week's homework, we will analyze [data on cardiac health](https://archive.ics.uci.edu/ml/datasets/Heart+Disease). Overall, the data set has 14 variables:
+```
+7. Attribute Information:
+   -- Only 14 used
+      -- 1. #3  (age)       
+      -- 2. #4  (sex)       
+      -- 3. #9  (cp)        
+      -- 4. #10 (trestbps)  
+      -- 5. #12 (chol)      
+      -- 6. #16 (fbs)       
+      -- 7. #19 (restecg)   
+      -- 8. #32 (thalach)   
+      -- 9. #38 (exang)     
+      -- 10. #40 (oldpeak)   
+      -- 11. #41 (slope)     
+      -- 12. #44 (ca)        
+      -- 13. #51 (thal)      
+      -- 14. #58 (num)       (the predicted attribute)
+
+   -- Complete attribute documentation:
+      3 age: age in years
+      4 sex: sex (1 = male; 0 = female)
+      9 cp: chest pain type
+        -- Value 1: typical angina
+        -- Value 2: atypical angina
+        -- Value 3: non-anginal pain
+        -- Value 4: asymptomatic
+     10 trestbps: resting blood pressure (in mm Hg on admission to the 
+        hospital)
+     12 chol: serum cholestoral in mg/dl
+     16 fbs: (fasting blood sugar > 120 mg/dl)  (1 = true; 0 = false)
+     19 restecg: resting electrocardiographic results
+        -- Value 0: normal
+        -- Value 1: having ST-T wave abnormality (T wave inversions and/or ST 
+                    elevation or depression of > 0.05 mV)
+        -- Value 2: showing probable or definite left ventricular hypertrophy
+                    by Estes' criteria
+     32 thalach: maximum heart rate achieved
+     38 exang: exercise induced angina (1 = yes; 0 = no)
+     40 oldpeak = ST depression induced by exercise relative to rest
+     41 slope: the slope of the peak exercise ST segment
+        -- Value 1: upsloping
+        -- Value 2: flat
+        -- Value 3: downsloping
+     44 ca: number of major vessels (0-3) colored by flourosopy
+     51 thal: 3 = normal; 6 = fixed defect; 7 = reversable defect
+     58 num: diagnosis of heart disease (angiographic disease status)
+        -- Value 0: < 50% diameter narrowing
+        -- Value 1: > 50% diameter narrowing
+        (in any major vessel: attributes 59 through 68 are vessels)
+
+```
+
+We will focus on age (column 1) and maximum heart rate (column 8).
+
+```{r}
+heart <- read.csv("processed.cleveland.data")[, c(1, 8)]
+colnames(heart) <- c("age", "max_heart_rate")
+ggplot(heart, aes(x = age, y = max_heart_rate)) + geom_point()
+```
+
+Labeling `max_heart_rate` as $Y$ (our dependent variable) and `age` as $X$ (our independent variable), we will consider the model for the relationship of $Y$ and $X$ as a linear function:
+$$Y_i = \beta_0 + \beta_1 X_i + R_i$$
+where 
+\[
+\begin{aligned}
+\beta_1 &= \frac{\text{Cov}(X,Y)}{\text{Var}(X)} \\
+\beta_0 &= E(Y) - \beta_1 E(X) \\
+R_i &= Y_i - \beta_0 - \beta_1 X_i
+\end{aligned}
+\]
+
+The the line described by $\beta_0$ and $\beta_1$ is the "population regression line". We don't get to observe $R_i$ for our sample, but we can estimate $\beta_0$ and $\beta_1$ to get estimates of $R_i$. Notice that if $\beta_1 = 0$, then $X$ and $Y$ are independent. For the rest of this paper, we will consider whether age and maximum heart rate are independent.
+
+
+
+### Part (a) (1 pt)
+
+The `lm` function in R can estimate $\beta_0$ and $\beta_1$ using sample means and variances. Since these estimators are based on sample means, we can use the **central limit theorem** to justify confidence intervals for $\beta_0$ and $\beta_1$ (we won't prove that rigorously in this setting, but consider it a known result).
+
+Use the `lm` function to estimate $\beta_0$ and $\beta_1$. Apply the `confint` function to the results to get 95% confidence intervals for the $\beta_1$ parameter. Comment on the hypothesis that $\beta_1 = 0$.
+
+Recall last week's homework where we checked the quality of the central limit theorem using Laplace and exponential distributions. The quality of the CLT approximation for the confidence interval you just produced will depend on the shape of the distribution of the residuals $R$.
+
+The estimated residuals ($\hat R_i$) can be found by applying the `resid` function to the result of `lm`. 
+Provide a density plot of these values (see `geom_density`). Do give you any reason to be concerned about the validity of the Central Limit Theorem approximation?
+
+### Answer (a)
+```{r}
+esti <- lm(max_heart_rate ~ age, heart)
+esti
+```
+From the above r code we can see that $\beta_0 = 204.0034$ and $\beta_1 = -0.9998$. 
+Then the 95% confidence interval for $\beta_1$ is:
+```{r}
+confint(esti, level = 0.95)
+```
+We can see that the 95% confidence interval doesn't contain $\beta_1 = 0$, so we can reject the null hypothethis that $\beta_1 = 0$, thus $X$ and $Y$ are dependent.
+below is the residuals and density plot:
+```{r}
+res <- resid(esti)
+ggplot(data.frame(residuals = res), aes(x = residuals)) + geom_density(alpha = 0.5, fill = "lightblue")
+```
+We can obviously see that the density plot is not quite symmetric, indicating that the Central Limit Theorem does not work very well. The reason is that the sample size is not large enough.
+
+
+### Part (b) (2 pts)
+
+You can use the `coef` function to get just the estimators $\hat \beta_0$ and $\hat \beta_1$. Use the `boot` package to get basic and percentile confidence intervals for just $\beta_1$. You will need to write a custom function to give as the `statistic` argument to `boot`. Use at least 1000 bootstrap samples. You can use `boot.ci` for the confidence intervals.
+
+Comment on the assumptions required for the bootstrap intervals. Again comment on the hypothesis that $X$ and $Y$ are indpendent.
+
+### Answer (b)
+```{r}
+library(boot)
+
+beta1_statistic <- function(x, i) {
+  boot_heart <- x[i, ]
+  esti <- lm(max_heart_rate ~ age, boot_heart)
+  coef(esti)[2]
+}
+
+beta1 <- boot(heart[, c("age", "max_heart_rate")], statistic = beta1_statistic, R = 1000)
+boot.ci(beta1, type = c("basic", "perc"))
+```
+The assumptions are that $n$ and $B$ are large enough. From the above table, we again find that both the basic and percentile confidence interval don't contain $\beta_1 = 0$, thus we can reject the null hypothesis that $X$ and $Y$ are independent.
+
+
+## Question 2 (6 pts)
+
+Suppose that instead of sampling pairs, we first identified some important values of $x$ that we wanted to investigate. Treating these values as fixed, we sampled a varying number of $Y_i$ for each $x$ value. For these data, we'll attempt to model the conditional distribution of $Y \, | \, x$ as:
+$$Y \, | \, x = \beta_0 + \beta_1 x + \epsilon$$
+where $\epsilon$ epsilon is assumed to be symmetric about zero (therefore, $E(\epsilon) = 0$) and the variance of $\epsilon$ does not depend on $x$ (a property called "homoskedasticity"). These assumptions are very similar to the population regression line model (as $E(R) = 0$ by construction), but cover the case where we want to design the study on particular values (a common case is a randomized trial where $x$ values are assigned from a known procedure and $Y$ is measured after).
+
+### Part (a) (3 pts)
+
+Let's start with some stronger assumptions and then relax them in the subsequent parts of the question.
+
+The assumptions that support the Central Limit Theorem in Question 1 can also be used to assume that $\epsilon \sim N(0, \sigma^2)$ so that:
+
+$$Y \mid x \sim N(\beta_0 + \beta_1 x, \sigma^2)$$
+
+We've noticed that the Normal distribution has "light tails" and assumptions based on Normality can be sensitive to outliers.
+
+Instead, suppose we we model $\epsilon$ with a scaled $t$-distribution with 4 degrees of freedom (i.e., has fatter tails than the Normal distribution): 
+$$\epsilon \sim \frac{\sigma}{\sqrt{2}} t(4) \Rightarrow \text{Var}(\epsilon) = \sigma^2$$
+(The $\sqrt{2}$ is there just to scale the $t$-distribution to have a variance of 1. More generally, if we picked a differed degrees of freedom parameter $v$, this would be replaced with $\sqrt{v/(v-2)}$.)
+
+
+One way to get an estimate of the distribution of $\hat \beta_1$ is the following algorithm:
+
+
+1. Estimate $\beta_0$, $\beta_1$, and $\sigma$ using linear regression (you can get the $\hat \sigma$ using `summary(model)$sigma`),
+2. For all the $x_i$ in the sample, generate $\hat y_i = \hat \beta_0 + \hat \beta_1 x_i$ (you can use `predict(model)` to get $\hat y$)
+3. For $B$ replications, generate $Y_i^* = \hat y_i + \epsilon_i*$, where 
+$$\epsilon^* \sim \frac{\hat \sigma}{\sqrt{2}} t(4)$$
+4.  For each replication, use linear regression to estimate $\hat \beta_1^*$. 
+5.  Use the $\alpha/2$ and $1 - \alpha/2$ quantiles of the bootstrap distribution to get the confidence intervals:
+$$[2 \hat \beta_1 - \hat \beta_1^*(1 - \alpha/2), 2 \hat \beta_1 - \hat \beta_1^*(\alpha/2)]$$
+To avoid double subscripts I've written $\hat \beta^*_1(1 - \alpha/2)$ as the upper $1 - \alpha/2$ quantile of the bootstrap (and likewise for the lower $\alpha/2$ quantile).
+
+You may note that this is a "basic" basic bootstrap interval. In fact, this procedure (fitting parameters, then simulating from a model) is known as a **parametric bootstrap**.
+
+Use the algorithm above to generate a confidence interval for $\beta_1$. Compare it to the fully parametric interval produced in Question 1(a). Which is larger or smaller?
+
+Note: The `boot` function does have the option of performing a parametric bootstrap using a user supplied `rand.gen` function. Feel free to use this functionality, but you may find it easier to implement the algorithm directly.
+
+### Answer (a)
+```{r}
+model <- lm(max_heart_rate ~ age, heart)
+sigma_esti <- summary(model)$sigma
+sigma_esti
+
+y_esti <- predict(model)
+B <- 1000
+n <- length(y_esti)
+Y_star <- rerun(B, y_esti + sigma_esti / sqrt(2) * rt(n, 4))
+
+beta1_esti_star <- map_dbl(Y_star, ~coef(lm(.x ~ age, heart))[2])
+beta1_esti <- coef(model)[2]
+conf_intv <- quantile(beta1_esti_star, c(0.025, 0.975))
+boot_conf_intv <- 2 * beta1_esti - conf_intv
+boot_conf_intv
+```
+The "basic" basic bootstrap interval is larger than that of fully parametric one in Question 1(a).
+
+### Part (b) (2 pts)
+
+As an alternative to sampling from an assumed distribution for $\epsilon$, we can replace step (3) in the previous algorithm with 
+
+3. Draw a sample (with replacement) from $\hat \epsilon_i$ and make $Y_i^* = \hat y_i + \epsilon_i^*$
+
+Implement this version of a parametric bootstrap. Feel free to use the `boot` package. 
+
+### Answer (b)
+```{r}
+model <- lm(max_heart_rate ~ age, heart)
+sigma_esti <- summary(model)$sigma
+sigma_esti
+
+y_esti = predict(model)
+B <- 1000
+residual_esti <- resid(model)
+n < length(residual_esti)
+Y_star <- rerun(B, y_esti + sample(residual_esti, n, replace = TRUE))
+beta1_esti_star <- map_dbl(Y_star, ~coef(lm(.x ~ age, heart))[2])
+
+beta1_esti <- coef(model)[2]
+conf_intv <- quantile(beta1_esti_star, c(0.025, 0.975))
+boot_conf_intv <- 2 * beta1_esti - conf_intv
+boot_conf_intv
+```
+
+
+### Part (c) (1 pt)
+
+Discuss the differences in the four types of intervals we created (fully parametric in 1(a), non-parametric bootstrap in 1(b), two variations of parametric bootstrap in 2(a) and 2(b)). When analyzing a particular data set, when would you pick one method over the another methods?
+
+### Answer (c)
+* For fully parametric method, we should know the assumption like the distribution, and it uses the original samples.
+* Non-parametric bootstrap doesn't need to know the distribution, and resamples from the original sample. However, n and B are required to be large enough, or the result will be not reliable.
+* Parametric bootstrap in 2(a) needs to know something about the distribution, and resamples from the data generated based on the estimation description in 2(a). It is usually more powerful than non-parametric bootstrap, but needs more assumptions and conditions.
+* Parametric bootstrap in 2(b), it changes the random data's generation from a t-distribution to the resampling of the residuals.
+
+If we cannot find out anything from the sample, we can choose non-parametric bootstrap with large n and B. However, if we know that the distribution of the sample is normal, parametric bootstrap can be applied.
+
+
+## Question 3 (1 pts)
+
+Read the paper "THE RISK OF CANCER ASSOCIATED WITH SPECIFIC MUTATIONS OF BRCA1 AND BRCA2 AMONG ASHKENAZI JEWS." Briefly summarize the paper. Make sure to discuss the research question, data source, methods, and results. How did the authors use the bootstrap procedure in this paper?
+
+### Answer
+The paper mainly discusses about the association between the risk of cancer and specific mutations of BRCA1 and BRCA2 in a large group of Jewish men and women from Washington, D.C..Blood samples from 5318 Jewish subjects are collected, and the paper estimated the risks of breast and other kinds of cancer by comparing the cancer histories of the relatives of carriers of the mutations and non-carriers.
+
+The result shows that by the age of 70, the estimated risk of breast cancer among carriers is 56% (the 95% confidence interval is 40% - 73%); for ovarian cancer, the estimated risk is about 16% (the 95% confidence interval is 6% - 28%); and for prostate cancer, it is about 16% (the 95% confidence interval is 4% - 30%). 
+
+What's more, there are no significant differences between the risk of breast cancer between carriers of BRCA1 mutations and carriers of BRCA2 mutations.
+
+In this paper, bootstrap is used to estimate the variance of the risk estimates.

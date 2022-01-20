@@ -1,0 +1,315 @@
+---
+title: "HW09"
+author: "Taoyue Xia"
+date: "July 25, 2021 at 11:59pm"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+set.seed(998112)
+```
+
+
+## Question 1 (3 pts)
+
+Let's investigate some time series data. Here are 12 years worth of S&P500 data (a composite index of 500 of the most capitalized stocks; it is often used as a proxy for the state of the entire United States stock market).
+
+```{r}
+load("spy.rda") # loads SPY table
+ggplot(SPY, aes(x = Date, y = Close)) + geom_line() # "Index" is the date
+```
+
+In particular, we will work with the daily (end of trading) returns
+
+```{r}
+SPY <- mutate(SPY,  Return = c(NA, Return = diff(Close)) / Close)[-1, ] # drop the NA one
+ggplot(SPY, aes(x = Date, y = Return)) + geom_line()
+```
+
+### Part (a) (1 pt)
+
+The Nadaraya-Watson estimator has the form:
+
+  $$\hat \mu(x) = \frac{\sum_{i = 1}^n K\left(\frac{X_i - x}{h} \right) Y_i} {\sum_{i = 1}^n K\left(\frac{X_i - x}{h}\right)}$$
+
+Find the limit of this expression for any fixed $x$, when $h \rightarrow \infty$. You may assume $0 < K(x) < \infty$ for all $x$.
+
+### Answer (a)
+Since $x$ is fixed and $h \rightarrow \infty$, we can easily find that:
+$$\lim_{h\rightarrow\infty}\frac{X_i - x}{h} = 0$$
+For all $X_i$. Therefore, the estimator when $h\rightarrow\infty$ can be expressed as:
+$$\lim_{h\rightarrow\infty}\hat \mu(x) = \lim_{h\rightarrow\infty}\frac{\sum_{i = 1}^n K\left(\frac{X_i - x}{h} \right) Y_i} {\sum_{i = 1}^n K\left(\frac{X_i - x}{h}\right)}=\frac{K(0)\cdot \sum_{i=0}^n Y_i}{nK(0)} = \sum_{i=0}^n \frac{Y_i}{n} = \mu(y)$$
+Therefore, the limit is $\sum_{i=0}^n \frac{Y_i}{n}$.
+
+
+### Part (b) (1 pt)
+
+We will use the `ksmooth` function with a **"normal" kernel** to fit an estimator of $\mu(x)$ for this time series. Here, we will use the index of the observations as the predictor:
+```{r}
+SPY <- mutate(SPY, idx = 1:nrow(SPY))
+```
+
+Use Leave-one-out Cross Validation to pick an appropriate bandwidth parameter for the `ksmooth` function to create the smoothed estimator using mean squared error as the loss function. You will notice something strange about the "best" value. What is this value telling you about the best possible estimator? 
+
+The efficient market hypothesis (EMH) states that markets incorporate all information in the stock price, and fluctuations are the result of unpredictable random shocks. One implication of the EMH is that the relative returns should have a mean of zero. Does your smoothing estimator (approximately) agree with the EMH?
+
+### Answer (b)
+```{r}
+n <- dim(SPY)[1]
+idx <- SPY$idx
+returns <- SPY$Return
+modej <- sapply(1:n, function(i){
+  d <- density(returns[-i])
+  d$x[which.max(d$y)]
+})
+err_mode <- modej - returns
+h <- mean(err_mode^2)
+ks <- ksmooth(idx, returns, bandwidth = h)
+mean(ks$y)
+```
+
+After smoothing, the estimator gives that the returns have a mean of 0.0001744, which is quite close to 0, so it agrees with the EMH.
+
+
+### Part (c) (1 pt)
+
+Even if the mean is zero, looking at the plot we notice that there are several "bursty" regions that appear to have wider variation than others. 
+
+If we suppose that the efficient market hypothesis is true (i.e., $\mu(x) = 0$), then we can use a smoothed estimator to estimate $\text{Var}(Y \mid x) = E(Y^2 \mid x) = \mu_2(x)$. By squaring the relative changes, compute a smoothed **conditional variance** estimator. Pick a bandwidth using LOOCV. Plot this estimator over the range of `idx`. Can you identify any periods where variance seemed to change drastically?
+
+### Answer (c)
+```{r}
+loss_one <- function(i, h) {
+  yhat_i <- ksmooth(bandwidth = h, kernel = "normal",
+                    x = SPY$idx[-i],
+                    y = SPY$Return[-i] ^ 2, 
+                    x.points = SPY$idx[i])
+  (yhat_i$y - SPY$Return[i] ^ 2) ^ 2
+}
+
+loss_LOOCV <- function(h) {mean(sapply(1:nrow(SPY), loss_one, h = h))}
+
+hs <- seq(0.4, 20, length.out = 50)
+h_loss <- sapply(hs, loss_LOOCV)
+best <- hs[which.min(h_loss)]
+best
+
+ks <- ksmooth(x = SPY$idx, y = SPY$Return ^ 2, kernel = "normal", bandwidth = best)
+data <- data.frame(idx = ks$x, return_square = ks$y)
+ggplot(data, aes(x = idx, y = return_square)) + geom_line()
+```
+The variance changes drastically at points when the returns are in a "bursty" region.
+
+
+## Question 2 (3 pts)
+
+While we can motivate ordinary least squares (OLS) as finding the maximum likelihood estimates for $Y \sim N(\beta'x, \sigma^2)$, OLS has wider applicability and still nice properties.
+
+When we model $E(Y \mid x) = \beta'x$ and assume a constant variance, ordinary least squares OLS is the best linear unbiased estimator of the $\beta$ parameters (i.e., among all methods that are linear functions of $Y$ and would have unbiased estimates of the parameters, OLS has the smallest variance.)
+
+### Part (a) (1 pt)
+
+Suppose we have the simple model
+
+$$E(Y \mid x) = \beta x$$
+(i.e., there is no intercept term.)
+
+Prove that the OLS estimate of $\beta$ is given by:
+
+$$\hat \beta = \sum_{i = 1}^n w_i Y_i, \quad w_i = \frac{x_i}{\sum_{i=1}^n x_i^2}$$
+
+and show that this is **unbiased for $\beta$**.
+
+Under the same model, show that estimator 
+
+$$\tilde \beta = \sum_{i=1}^n w_i Y_i, \quad w_i = \frac{1}{n x_i}$$
+is unbiased for $\beta$.
+
+### Answer (a)
+We know that by applying the loss function as squared error loss, we can get the OLS as:
+$$R(\beta)=\sum_{i=1}^n (Y_i - \beta x_i)^2$$
+Then we take the first derivative of $\beta$ and assign its value to 0 to get the minimum:
+$$
+R^\prime(\beta) = 2\sum_{i=1}^n x_i(Y_i - \hat{\beta}x_i) = 0\\
+\sum_{i=0}^n x_iY_i - \hat{\beta}\sum_{i=1}^n x_i^2 = 0\\
+\hat{\beta} = \frac{\sum_{i=0}^n x_iY_i}{\sum_{i=0}^n x_i^2}
+$$
+We let $w_i = \frac{x_i}{\sum_{i=0}^n x_i^2}$, then
+$$\hat \beta = \sum_{i = 1}^n w_i Y_i, \quad w_i = \frac{x_i}{\sum_{i=1}^n x_i^2}$$
+So it is proved that the OLS estimate of $\beta$ is the above expression.
+To show that it is unbiased for $\beta$, we can do the following:
+$$
+\begin{align}
+E(\hat \beta\,|\,x) &= \sum_{i=1}^n \frac{x_i}{\sum_{i=1}^n x_i^2}\cdot E(Y_i\, |\, x)\\
+                    &= \sum_{i=1}^n \frac{x_i}{\sum_{i=1}^n x_i^2}\cdot \beta x_i\\
+                    &= \beta
+\end{align}
+$$
+Then it is shown that it is unbiased.
+
+For the latter estimator:
+$$
+\begin{align}
+E(\tilde \beta\, |\, x) &= E(\sum_{i=1}^n \frac{Y_i}{nx_i}\, |\, x)\\
+                        &= \sum_{i=1}^n \frac{1}{nx_i}\cdot E(Y_i\, |\, x)\\
+                        &= \sum_{i=1}^n \frac{1}{nx_i}\cdot \beta x_i\\
+                        &= \frac{\beta}{n}\sum_{i=1}^n \frac{x_i}{x_i}=\beta
+\end{align}
+$$
+Thus it is also an unbiased estimator for $\beta$.
+
+
+### Part (b) (1 pt)
+
+We can also consider **biased estimators** that have lower variance. One such estimator is called **ridge regression** and the estimator is given by
+
+$$\bar \beta = (X'X + \lambda I)^{-1} X'Y$$
+where $\lambda$ is some positive value and $I$ is the identity matrix.
+
+Find the ridge regression estimator for the model of (a) and show that for any $\lambda > 0$, $\bar \beta$ and $\hat \beta$ will have **same sign** and $|\bar \beta| < |\hat \beta|$.
+
+(Note: ridge regression is known as a **shrinkage estimator** in that in **shrinks the estimate of $\beta$ towards zero**. This can be useful if one is considering a model with many $\beta$ parameters for variables on roughly the same scale, but you only think a few of the variables influence the outcome. Ridge regression, and other shrinkage estimators, will force small estimates even smaller, letting the important predictors shine through.)
+
+### Answer (b)
+We know that
+$$X = \begin{pmatrix} x_1\\ \vdots \\ x_n\end{pmatrix}$$
+where $x_i = \begin{pmatrix} x_{i_1}\ x_{i_2} \cdots x_{i_k}\end{pmatrix}$
+The above estimator can be transformed into:
+$$
+(X'X + \lambda I) \bar \beta = X'Y\\
+[(x_1\ x_2\ \cdots\ x_n)\cdot \begin{pmatrix} x_1\\ x_2\\ \vdots\\ x_n\end{pmatrix} + \lambda]\cdot \bar \beta = (x_1\ x_2\ \cdots\ x_n)\cdot \begin{pmatrix} Y_1\\ Y_2\\ \vdots\\ Y_n \end{pmatrix}\\
+\bar\beta\cdot (\sum_{i=1}^n x_i^2 + \lambda) = \sum_{i=1}^n x_iY_i\\
+\Rightarrow \bar \beta = \frac{\sum_{i=1}^n x_iY_i}{\sum_{i=1}^n x_i^2 + \lambda}
+$$
+Since $x_i^2 \geq 0$ and $\lambda > 0$, we can conclude that $\bar \beta$ has the same symbol with $\hat \beta$, and $|\bar \beta| < |\hat \beta|$ because their expressions are of the same numerator, however, the denominator of $\bar \beta$ is larger.
+
+### Part c (1 pt)
+
+Estimate the bias and variance of the sampling distributions for $\hat \beta$,  $\tilde \beta$, and $\bar \beta$ when $\lambda = 1$ and $\lambda = 1000$ when
+
+- $\beta = 2$
+- $n = 20$
+- $x_i \sim 1 + \text{Exp}(1/10)$
+- $Y_i \mid x_i \sim U(\beta x_i - 50, \beta x_i + 50)$
+
+Use 10,000 Monte Carlo samples. What do you notice about the operating characteristics of these three estimators?
+
+```{r}
+beta <- 2
+n <- 20
+
+
+beta_hat_generate <- function(n, beta) {
+  x <- rexp(n, 0.1) + 1
+  y <- c()
+  for(i in 1:n) {
+    y <- c(y, runif(1, min = x[i]*beta-50, max = x[i]*beta+50))
+  }
+  sum(x * y) / sum(x^2)
+}
+
+beta_hat <- unlist(rerun(10000, beta_hat_generate(n, beta)))
+mean(beta_hat)
+
+beta_tilde_generate <- function(n, beta) {
+  x <- rexp(n, 0.1) + 1
+  y <- c()
+  for(i in 1:n) {
+    y <- c(y, runif(1, min = x[i]*beta-50, max = x[i]*beta+50))
+  }
+  1 / n * sum(y / x)
+}
+
+beta_tilde <- unlist(rerun(10000, beta_tilde_generate(n, beta)))
+mean(beta_tilde)
+
+beta_bar_generate <- function(n, beta, lambda) {
+  x <- rexp(n, 0.1) + 1
+  y <- c()
+  for(i in 1:n) {
+    y <- c(y, runif(1, min = x[i]*beta-50, max = x[i]*beta+50))
+  }
+  sum(x * y) / (sum(x^2) + lambda)
+}
+
+beta_bar_2 <- unlist(rerun(10000, beta_bar_generate(n, beta, 2)))
+beta_bar_1000 <- unlist(rerun(10000, beta_bar_generate(n, beta, 1000)))
+mean(beta_bar_2)
+mean(beta_bar_1000)
+
+print("biases are listed below")
+
+(bias_beta_hat <- mean(beta_hat - beta))
+(bias_beta_tilde <- mean(beta_tilde - beta))
+(bias_beta_bar_2 <- mean(beta_bar_2 - beta))
+(bias_beta_bar_1000 <- mean(beta_bar_1000 - beta))
+
+print("variances are listed below")
+
+(var_beta_hat <- var(beta_hat))
+(var_beta_tilde <- var(beta_tilde))
+(var_beta_bar_2 <- var(beta_bar_2))
+(var_beta_bar_1000 <- var(beta_bar_1000))
+```
+We can obviously find that estimators for $\hat \beta$ and $\tilde \beta$ is unbiased as proved, and when $\lambda$ is close to 0, estimator for $\bar \beta$ is nearly unbiased. However, when $\lambda$ is large, it is not accurate and has a large bias.
+Meanwhile, The estimator $\hat \beta$ has a quite small variance, while the variance of $\tilde \beta$ is quite large. However, for both $\bar \beta$ when $\lambda=2$ and $\lambda=1000$, the variances are small. And when $\lambda$ is larger, the variance is smaller.
+
+
+
+## Question 3 (4 points)
+
+### Part (a) (1 point)
+
+Read sections 1 to 3.1, and 4 to 4.1 of "Environmental Kuznets Curve Hypothesis: A Survey" (of course, you may read more, but these sections contain the most relevant information for this week's homework). Briefly summarize the idea of the **Environmental Kuznets Curve** (EKC). Specifically, what kind of relationship does it posit between economic development (say GDP per capita) and environmental impact (for example CO$_2$ per capita emission)?
+
+### Answer (a)
+>The Environmental Kuznets Curve (EKC) is used to show a long-term relationship between environmental impact and economic growth. Such a relationship can be depicted using an inverted U-shaped curve.
+It assumes that in the early stage of economic growth, the awareness of protecting the environment is low and there are no environmentally-friendly technologies. Therefore, the environment pressure is high. As the economy grows, better eco-friendly technologies are used and industries' intensity changes into information-intensive ones or service ones. During this period, the environmental quality starts to improve after the turning point of the curve.
+
+
+### Part (b) (1 points)
+
+Load the data in the supplied CSV file, `world_bank_data.csv`. These represent three different variables measured on countries and other entities in 2014. Right now, the data are stacked such that for each county (or aggregation of countries)-year-variable entry there is one row. We would prefer to have the data in table such that each row is one country, and the four variables are represented by one column each.
+
+Your task is to turn the stacked data into a more convenient format with a row for each country and a unique column for each type of series. To verify your results, include the output of the `summary()` function applied to the final `data.frame`.
+
+Here is a little code to get you started:
+
+```{r}
+world_bank_stacked <- read.csv("world_bank_data.csv") 
+```
+
+The `pivot_wider` function will be helpful [Documentation](https://tidyr.tidyverse.org/).
+
+After unstacking the data, create columns for GDP per capita and CO2 emissions per capita (i.e., the ratios of GDP and CO2 emissions to total population).
+
+### Answer (b)
+```{r}
+convenient <- pivot_wider(world_bank_stacked, names_from = Series.Name, values_from = Value)
+summary(convenient)
+
+convenient$GDP_per_capita <- convenient$`GDP (current US$)` / convenient$`Population, total`
+convenient$CO2_per_capita <- convenient$`CO2 emissions (kt)` / convenient$`Population, total`
+summary(convenient)
+```
+
+
+
+### Part (c) (2 points)
+
+Section 4.1 of the EKC paper includes a specification for a model that relates country income to CO2 per capita. For our purposes, we will fix a single observation per country ($t = 1$ for all observations) and not include any other predictors (labeled $z$ in the model).
+
+
+Fit an OLS model using the specification given in equation (1) one on page 440. Using the `summary` function, interpret the hypothesis tests for each parameter. Interpret your results using the listing of possible outcomes given on pages 440 and 441. Do you think there is evidence to support the EKC theory? Can we rule out the EKC theory?
+
+### Answer (c)
+```{r}
+EKC <- lm(convenient$CO2_per_capita ~ 1 + convenient$GDP_per_capita + I(convenient$GDP_per_capita ^ 2) + I(convenient$GDP_per_capita ^ 3))
+summary(EKC)
+```
+
+The null hypothesis is that the coefficients are 0. From the summary, we find that the p-values for the intercept and the coefficient of $x^3$ are large, so we don't have strong confidence to reject the null hypotheses. However, the p-values of the $x$ and $x^2$ are smaller than 0.05, hence we would reject the null hypothesis. Therefore, we can conclude that the CO2 per capita is related with GDP per capita and the square of GDP per capita.
+
+From the summary, we see that $\beta_1>0$, $\beta_2<0$, and $\beta_3=0$. So it should be an inverted-U-shaped relationship. There is some evidence that support the EKC theory and we don't have confidence to rule out the EKC theory.

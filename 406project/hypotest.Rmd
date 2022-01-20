@@ -1,0 +1,15 @@
+---
+title: "Hypothesis test"
+output: pdf_document
+---
+
+
+## Hypothesis test
+Since in 2020 the coronavirus broke out, we will look into the police shooting events happened from 2015 to 2019.\newline
+Now that we want to study the distribution of the number of everyday shootings, we first construct a histogram to give a rough knowledge. After gathering the five-year data together, we find that the data shown by the histogram fit a Poisson distribution to some extent, which motivate us to use hypothesis test to prove our view.\newline
+Now we give the null hypothesis that the number of everyday shootings from 2015 to 2019 follows a Poisson distribution. Then we approximate the parameter k using sample mean, which can be expressed as:
+$$\hat{k} = \frac{N}{n} = \frac{1}{n}\sum_{i=0}^{max}(i\times O_i)$$
+where $N$ stands for total shooting numbers, $n$ denotes for total days in these five years, and $O_i$ is the number of days counting for each number of shootings from 0 to 9. After that, referring to Cochran's Rule, we can construct a random variable $X$ such that:
+$$X^2 = \sum_{i=0}^{max}\frac{(E_i - O_i)^2}{E_i}$$
+follows a Chi-squared distribution, where $E_i$ is the expected days for each shooting number.\newline
+Finally, we can decide whether to reject the null hypothesis by comparing the computed $X^2$ with $\chi^2_{0.05,8}$ at $\alpha=0.05$ level.

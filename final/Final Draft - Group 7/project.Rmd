@@ -1,0 +1,950 @@
+---
+title: "ARE FATAL POLICE SHOOTINGS IN THE UNITED STATES GETTING WORSE?"
+author: | 
+  | Tanrui Wu  518370910221
+  | Taoyue Xia 518370910087
+  | Xingyu Zhu 518370910023
+date: '2021-08-04'
+header-includes:
+    - \usepackage{setspace}\doublespacing
+    - \usepackage{float}
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(288942)
+library(tidyverse)
+library(boot)
+library(Rmisc)
+library(grid)
+library(cowplot)
+library(xtable)
+```
+
+# Introduction
+On May 26, 2020, a 46-year-old African American man called George Floyd was killed during an arrest after Derek Chauvin, a Minneapolis Police Department officer, who knelt on Floyd's neck for 9 minutes and 29 seconds as three other officers looked on and prevented passers-by from intervening [1]. The case that shocked the United States, questioned the behavior of the US police and triggered an unprecedented scale of demonstrations across the country in the summer of 2020. It also arouse a national-wide discussion about fatal cases during enforcement of police. People questioned about whether there were more and more such fatal cases caused by police in recent years, and called for fair and impartial enforcement. In our project, we consider whether these shocking incidents in the media are evidence that things are really getting worse, and we decide to observe it from a certain angle: number of fatal police shootings in US each year.
+
+Each year, There are thousands of fatal police shootings happening in the United States. So do they follow a predictable pattern? Does the number of shootings increase every year? In our project, we analyze the data of those shootings from 2015 to 2020 and try to find some rules behind them. Since the shootings are independent; happening one does not change the probability of when the next one will happen, and the shootings occur with an almost constant rate within a fixed interval of time. We make our assumption that the number of shootings per day follows a Possion distribution and try to test it during this project.
+
+What means ”fatal police shooting”? From the detailed information provided on the website, The Washington Post. Fatal force [2]. We can have a general idea of the meaning of the term ”fatal police shooting”. Among the term, the ”police” stands for not only on-duty police officers, but it also can be off-duty officers or deputies of the County sheriff. In the cases that fatal police shooting occur, most of the suspects were shot and killed immediately, but there are also people shocked by stun gun first and shot later. Also, they all show threat to the ”police” to some extent, before being shot. And however the process was, they died in the end, which corresponds to the word, ”fatal”.
+
+In this project, we first explain the meaning of "fatal", summarize the data, and visualize the data from 2015 to 2020. Then we test whether the number of shootings per day in the last 6 years follows a Poisson distribution through the hypothesis test, and calculate the confidence interval of the parameter k through bootstrap method, which is also the expected shooting number per day. 
+
+# Data
+The data we download from the website [3] records the information of every fatal police shooting in the U.S each day from January of 2015 to July of 2021. It includes the name, gender, age and race of the suspects, and record how he/she is killed, and the condition when the fatal shooting happened, for example,the threat level, whether he/she was armed, whether he/she showed sign of mental illness and so on. And most importantly, it contains the location and date of the cases.
+
+The file `fatal-police-shootings-data.csv` contains data about each fatal shooting in CSV format. Each row has the following variables:
+\begin{itemize}
+\item id: a unique identifier for each victim
+\item name: the name of the victim
+\item date: the date of the fatal shooting in YYYY-MM-DD format
+\item manner of death:
+\begin{itemize}
+\item shot
+\item shot and Tasered
+\end{itemize}
+\item armed: indicates that the victim was armed with some sort of implement that a police officer believed could
+\begin{itemize}
+\item undetermined: it is not known whether or not the victim had a weapon
+\item unknown: the victim was armed, but it is not known what the object was
+\item unarmed: the victim was not armed
+\end{itemize}
+\item age: the age of the victim
+\item gender: the gender of the victim. The Post identifies victims by the gender they identify with if reports indicate that it differs from their biological sex.
+\begin{itemize}
+\item M: Male
+\item F: Female
+\item None: unknown
+\end{itemize}
+\item race:
+\begin{itemize}
+\item W: White, non-Hispanic
+\item B: Black, non-Hispanic
+\item A: Asian
+\item N: Native American
+\item H: Hispanic
+\item O: Other
+\item None: unknown
+\end{itemize}
+\item city: the municipality where the fatal shooting took place. Note that in some cases this field may contain a county name if a more specific municipality is unavailable or unknown.
+\item state: two-letter postal code abbreviation
+\item signs of mental illness: News reports have indicated the victim had a history of mental health issues, expressed suicidal intentions or was experiencing mental distress at the time of the shooting.
+\item threat level: The threat level column was used to flag incidents for the story by Amy Brittain in October 2015. 
+\item flee: News reports have indicated the victim was moving away from officers
+\begin{itemize}
+\item Foot
+\item Car
+\item Not fleeing
+\end{itemize}
+\item body camera: News reports have indicated an officer was wearing a body camera and it may have recorded some portion of the incident.
+\item latitude and longitude: the location of the shooting expressed as WGS84 coordinates, geocoded from addresses.
+\item is geocoding exact: reflects the accuracy of the coordinates. 
+
+
+
+
+\end{itemize}
+
+
+To have a general impression of the data from 2015 to 2020, we first plot the number of fatal police shooting per day from 2015 to 2020,
+
+```{r echo=FALSE}
+library(tidyverse)
+library(ggplot2)
+shootings <- read.csv("fatal-police-shootings-data.csv")
+shootings_2015 <- shootings[1:993,]
+shootings_2016 <- shootings[994:1952,]
+shootings_2017 <- shootings[1953:2938,]
+shootings_2018 <- shootings[2939:3928,]
+shootings_2019 <- shootings[3929:4927,]
+shootings_2020 <- shootings[4928:5948,]
+```
+
+```{r echo=FALSE}
+col_base <- c("id", 
+              "name", 
+              "date", 
+              "manner_of_death", 
+              "armed", 
+              "age", 
+              "race", 
+              "city", 
+              "state", 
+              "signs_of_mental_illness", 
+              "threat_level", 
+              "flee", 
+              "body_camera", 
+              "longitude", 
+              "latitude", 
+              "is_geocoding_exact"
+              )
+#colnames(shootings) <- col_base
+#shootings$date
+# g <- group_by(shootings, date)
+ggplot(shootings, aes(x = date)) + geom_histogram(stat = "count", col = "orange")
+
+num <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+count <- 1
+days <- 0
+for(i in 1:5948){
+  if(i == 1){
+    days <- days + 1
+    next
+  }
+  
+  if(shootings$date[i] == shootings$date[i-1]){
+    count <- count + 1
+    if(i == 5948){
+      num[count + 1] <- num[count + 1] + 1
+      break
+    }
+    next
+  }
+  else {
+    num[count + 1] <- num[count + 1] + 1
+    days <- days + 1
+    if(i == 5948){
+      num[2] <- num[2] + 1
+      break
+    }
+    count <- 1
+    next
+  }
+  
+}
+num[1] <- 365 * 4 + 366*2 - days
+
+x <- c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+y <- num
+data <- c()
+for(i in 1:11) {
+  data <- c(data, rep(i - 1, num[i]))
+}
+d_all <- data.frame(x = data)
+ggplot(d_all, aes(x)) + geom_histogram(binwidth = 1, fill = "yellow", color = "black") + labs(x = "shooting numbers", y = "number of days") + ggtitle("Histogram of all data from 2015 to 2020")
+# lines(density(data))
+```
+
+
+```{r echo=FALSE}
+num_2015 <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+count <- 1
+days <- 0
+for(i in 1:nrow(shootings_2015)){
+  if(i == 1){
+    days <- days + 1
+    next
+  }
+  
+  if(shootings_2015$date[i] == shootings_2015$date[i-1]){
+    count <- count + 1
+    if(i == nrow(shootings_2015)){
+      num_2015[count + 1] <- num_2015[count + 1] + 1
+      break
+    }
+    next
+  }
+  else {
+    num_2015[count + 1] <- num_2015[count + 1] + 1
+    days <- days + 1
+    if(i == nrow(shootings_2015)){
+      num_2015[2] <- num_2015[2] + 1
+      break
+    }
+    count <- 1
+    next
+  }
+  
+}
+num_2015[1] <- 365 - days
+
+data_2015 <- c()
+for(i in 1:11) {
+  data_2015 <- c(data_2015, rep(i - 1, num_2015[i]))
+}
+data1 <- data.frame(x = data_2015)
+h1 <- ggplot(data1, aes(x)) + geom_histogram(binwidth = 1, fill = "yellow", color = "black") + labs(x = "shooting numbers", y = "number of days") + ggtitle("Histogram of data 2015")
+# h1 <- hist(data_2015, right = FALSE, xlab = "shooting numbers", ylab = "number of days", xlim = c(0, 10), ylim = c(0, 100), col = "yellow")
+# lines(density(data))
+
+# 2016
+num_2016 <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+count <- 1
+days <- 0
+for(i in 1:nrow(shootings_2016)){
+  if(i == 1){
+    days <- days + 1
+    next
+  }
+  
+  if(shootings_2016$date[i] == shootings_2016$date[i-1]){
+    count <- count + 1
+    if(i == nrow(shootings_2016)){
+      num_2016[count + 1] <- num_2016[count + 1] + 1
+      break
+    }
+    next
+  }
+  else {
+    num_2016[count + 1] <- num_2016[count + 1] + 1
+    days <- days + 1
+    if(i == nrow(shootings_2016)){
+      num_2016[2] <- num_2016[2] + 1
+      break
+    }
+    count <- 1
+    next
+  }
+  
+}
+num_2016[1] <- 366 - days
+
+data_2016 <- c()
+for(i in 1:11) {
+  data_2016 <- c(data_2016, rep(i - 1, num_2016[i]))
+}
+data2 <- data.frame(x = data_2016)
+h2 <- ggplot(data2, aes(x)) + geom_histogram(binwidth = 1, fill = "yellow", color = "black") + labs(x = "shooting numbers", y = "number of days") + ggtitle("Histogram of data 2016")
+# h2 <- hist(data_2016, right = FALSE, xlab = "shooting numbers", ylab = "number of days", xlim = c(0, 10), ylim = c(0, 100), col = "yellow")
+# lines(density(data))
+
+# 2017
+num_2017 <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+count <- 1
+days <- 0
+for(i in 1:nrow(shootings_2017)){
+  if(i == 1){
+    days <- days + 1
+    next
+  }
+  
+  if(shootings_2017$date[i] == shootings_2017$date[i-1]){
+    count <- count + 1
+    if(i == nrow(shootings_2017)){
+      num_2017[count + 1] <- num_2017[count + 1] + 1
+      break
+    }
+    next
+  }
+  else {
+    num_2017[count + 1] <- num_2017[count + 1] + 1
+    days <- days + 1
+    if(i == nrow(shootings_2017)){
+      num_2017[2] <- num_2017[2] + 1
+      break
+    }
+    count <- 1
+    next
+  }
+  
+}
+num_2017[1] <- 365 - days
+
+data_2017 <- c()
+for(i in 1:11) {
+  data_2017 <- c(data_2017, rep(i - 1, num_2017[i]))
+}
+data3 <- data.frame(x = data_2017)
+h3 <- ggplot(data3, aes(x)) + geom_histogram(binwidth = 1, fill = "yellow", color = "black") + labs(x = "shooting numbers", y = "number of days") + ggtitle("Histogram of data 2017")
+# h3 <- hist(data_2017, right = FALSE, xlab = "shooting numbers", ylab = "number of days", xlim = c(0, 10), ylim = c(0, 100), col = "yellow")
+# lines(density(data))
+
+#2018
+num_2018 <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+count <- 1
+days <- 0
+for(i in 1:nrow(shootings_2018)){
+  if(i == 1){
+    days <- days + 1
+    next
+  }
+  
+  if(shootings_2018$date[i] == shootings_2018$date[i-1]){
+    count <- count + 1
+    if(i == nrow(shootings_2018)){
+      num_2018[count + 1] <- num_2018[count + 1] + 1
+      break
+    }
+    next
+  }
+  else {
+    num_2018[count + 1] <- num_2018[count + 1] + 1
+    days <- days + 1
+    if(i == nrow(shootings_2018)){
+      num_2018[2] <- num_2018[2] + 1
+      break
+    }
+    count <- 1
+    next
+  }
+  
+}
+num_2018[1] <- 365 - days
+
+data_2018 <- c()
+for(i in 1:11) {
+  data_2018 <- c(data_2018, rep(i - 1, num_2018[i]))
+}
+data4 <- data.frame(x = data_2018)
+h4 <- ggplot(data4, aes(x)) + geom_histogram(binwidth = 1, fill = "yellow", color = "black") + labs(x = "shooting numbers", y = "number of days") + ggtitle("Histogram of data 2018")
+# h4 <- hist(data_2018, right = FALSE, xlab = "shooting numbers", ylab = "number of days", xlim = c(0, 10), ylim = c(0, 100), col = "yellow")
+# lines(density(data))
+
+# 2019
+num_2019 <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+count <- 1
+days <- 0
+for(i in 1:nrow(shootings_2019)){
+  if(i == 1){
+    days <- days + 1
+    next
+  }
+  
+  if(shootings_2019$date[i] == shootings_2019$date[i-1]){
+    count <- count + 1
+    if(i == nrow(shootings_2019)){
+      num_2019[count + 1] <- num_2019[count + 1] + 1
+      break
+    }
+    next
+  }
+  else {
+    num_2019[count + 1] <- num_2019[count + 1] + 1
+    days <- days + 1
+    if(i == nrow(shootings_2019)){
+      num_2019[2] <- num_2019[2] + 1
+      break
+    }
+    count <- 1
+    next
+  }
+  
+}
+num_2019[1] <- 365 - days
+
+data_2019 <- c()
+for(i in 1:11) {
+  data_2019 <- c(data_2019, rep(i - 1, num_2019[i]))
+}
+data5 <- data.frame(x = data_2019)
+h5 <- ggplot(data5, aes(x)) + geom_histogram(binwidth = 1, fill = "yellow", color = "black") + labs(x = "shooting numbers", y = "number of days") + ggtitle("Histogram of data 2019")
+# h5 <- hist(data_2019, right = FALSE, xlab = "shooting numbers", ylab = "number of days", xlim = c(0, 10), ylim = c(0, 100), col = "yellow")
+# lines(density(data))
+
+# 2020
+num_2020 <- c(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+count <- 1
+days <- 0
+for(i in 1:nrow(shootings_2020)){
+  if(i == 1){
+    days <- days + 1
+    next
+  }
+  
+  if(shootings_2020$date[i] == shootings_2020$date[i-1]){
+    count <- count + 1
+    if(i == nrow(shootings_2020)){
+      num_2020[count + 1] <- num_2020[count + 1] + 1
+      break
+    }
+    next
+  }
+  else {
+    num_2020[count + 1] <- num_2020[count + 1] + 1
+    days <- days + 1
+    if(i == nrow(shootings_2020)){
+      num_2020[2] <- num_2020[2] + 1
+      break
+    }
+    count <- 1
+    next
+  }
+  
+}
+num_2020[1] <- 365 - days
+
+data_2020 <- c()
+for(i in 1:11) {
+  data_2020 <- c(data_2020, rep(i - 1, num_2020[i]))
+}
+data6 <- data.frame(x = data_2020)
+h6 <- ggplot(data6, aes(x)) + geom_histogram(binwidth = 1, fill = "yellow", color = "black") + labs(x = "shooting numbers", y = "number of days") + ggtitle("Histogram of data 2020")
+# h6 <- hist(data_2020, right = FALSE, xlab = "shooting numbers", ylab = "number of days", xlim = c(0, 10), ylim = c(0, 100), col = "yellow")
+
+grid.newpage()
+pushViewport(viewport(layout = grid.layout(3,2)))
+vplayout <- function(x,y){ viewport(layout.pos.row = x, layout.pos.col = y)}
+print(h1, vp = vplayout(1,1))
+print(h2, vp = vplayout(1,2))
+print(h3, vp = vplayout(2,1))
+print(h4, vp = vplayout(2,2))
+print(h5, vp = vplayout(3,1))
+print(h6, vp = vplayout(3,2))
+
+# lines(density(data))
+```
+
+From the diagram, we can see that the number of fatal police shooting per day varies from 0 to 9. There are only few days that no shooting happened. The shape of "Histogram of data" is very similar to Poisson distribution. However, it is hard to find any obvious issues directly from the diagram, so we need to do further analysis in detail.
+
+# Methods
+
+Denote $X$ as the number of fatal shootings happened each day. First we want to estimate the value of average fatal shootings per day $\bar{X}$. Since sample mean is an unbiased estimator, we use following estimator:
+$$\hat{k} = \bar{X} = \frac{1}{n}\sum_{i=1}^{n}(X_i),$$
+where $n$ is the number of days in a year. If the value of $\hat{k}$ didn't grow significantly in 2020, there is no evidence that fatal shooting is more frequent. We will use bootstrap instead of Monte Carlo method to give a 95% confidence interval for $\hat{k}$. This is because it is not realistic to let time go back and draw multiple samples for the number of shooting per day, making it hard for us to use Monte Carlo methods. Using bootstrap, we can estimate the sampling distribution of $\hat{k}$ by drawing multiple samples from the original sample.
+
+What we want to study after that is the distribution of $X$. If the distribution of $X$ in 2020 didn't differ significantly from distributions in past few years, there is no evidence that the police had changed their gun-using habits. From Fig.2, we find that the data shown by the histogram fit a Poisson distribution to some extent, which motivate us to use hypothesis test to prove our view.
+
+Now we give the null hypothesis that the number of everyday fatal shootings follows a Poisson distribution with parameter $\hat{k}$.The alternative hypothesis is that the number of everyday fatal shootings follows a Poisson distribution with parameter $\hat{k}+0.5$.
+$$
+H_0: X \sim \text{Poisson}(k), k=\hat{k}
+$$
+$$
+H_1: X \sim \text{Poisson}(k), k \geq\hat{k}+0.5
+$$
+After that, referring to Goodness-of-Fit Test for a discrete distribution, we can use the Person statistic $X^2_{k-1}$ such that:
+$$T(X)_1 = \sum_{i=0}^{k}\frac{(E_i - O_i)^2}{E_i},$$
+to test whether certain data follows a Poisson distribution. Here, $E_i$ is the expected number of days at which i fatal shootings happened, while $O_i$ is the observed number of days at which i fatal shootings happened. The value of $E_i$ can be expressed as $E_i = n \cdot \text{P}[X=i]$. Monte Carlo methods will be applied to obtained a rejection region for this test statistic and to calculate the power of the test. We can decide whether to reject the null hypothesis by comparing the computed $T(X)_1$ and the critical value we get by using Monte Carlo method.
+
+We are also interested in the ratio of mean to variance of the data,
+$$T(X)_2 = \frac{\bar{X}}{\frac{1}{n}\sum_{i=1}^{n}(X_i - \bar{X})^2},$$
+since the mean equals the variance for data following Poisson distribution, which will be proved by Monte Carlo method. We will estimate the ratio of mean to variance of our data and provide a 95% confidence interval for this value using bootstrap. We expect such confidence interval to include 1, which indicates evidences that our fatal shooting data may follows a Poisson distribution.
+
+# Simulation
+
+We will randomly generate 10000 samples. Each sample is drawn from Poisson distribution with parameter $\hat{k}$. Each sample size equals to number of days one year. For each sample, the $X^2_{k-1}$ statistic will be calculate and the resulting 10000 value will form a sample distribution of $X^2_{k-1}$. The 2.5% and 97.5% quantile will be the critical value for our test.
+
+After that, we draw the six density plots corresponding to the years from 2015 to 2020, which is shown below.
+
+```{r include=FALSE}
+sample_00 = rerun(10000, rpois(length(data_2015), mean(data_2015)))
+ts_0 = unlist(map(sample_00, function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2015)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6, mean(data_2015))) * length(x)
+  sum = sum + (o-e)^2/e
+}))
+
+sample_1 = rerun(10000, rpois(length(data_2015), mean(data_2015)+0.5))
+ts_1 = unlist(map(sample_1, function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2015)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6,mean(data_2015))) * length(x)
+  sum = sum + (o-e)^2/e
+}))
+d1 <- ggplot(data.frame(T = c(ts_0, ts_1), Hypothesis = c(rep('Null', 10000),
+rep('Alternative', 10000))), aes(x = T, fill = Hypothesis, color = Hypothesis))+ geom_density(alpha = 0.75, show.legend = FALSE)
+```
+
+```{r include=FALSE}
+(q_2015 <- quantile(ts_0, c(0.025, 0.975)))
+```
+
+```{r include=FALSE}
+p_2015 <- map_dbl(ts_1, ~.x < q_2015[1] || .x > q_2015[2])
+mean(p_2015)
+```
+
+```{r include=FALSE}
+sample_01 = rerun(10000, rpois(length(data_2016), mean(data_2016)))
+ts_0 = unlist(map(sample_01, function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2016)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6, mean(data_2016))) * length(x)
+  sum = sum + (o-e)^2/e
+}))
+
+sample_1 = rerun(10000, rpois(length(data_2016), mean(data_2016)+0.5))
+ts_1 = unlist(map(sample_1, function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2016)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6,mean(data_2016))) * length(x)
+  sum = sum + (o-e)^2/e
+}))
+d2 <- ggplot(data.frame(T = c(ts_0, ts_1), Hypothesis = c(rep('Null', 10000),
+rep('Alternative', 10000))), aes(x = T, fill = Hypothesis, color = Hypothesis))+ geom_density(alpha = 0.75, show.legend = FALSE)
+```
+
+```{r include=FALSE}
+(q_2016<- quantile(ts_0, c(0.025, 0.975)))
+```
+
+```{r include=FALSE}
+p_2016 <- map_dbl(ts_1, ~.x < q_2016[1] || .x > q_2016[2])
+mean(p_2016)
+```
+
+```{r include=FALSE}
+sample_02 = rerun(10000, rpois(length(data_2017), mean(data_2017)))
+ts_0 = unlist(map(sample_02, function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2017)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6, mean(data_2017))) * length(x)
+  sum = sum + (o-e)^2/e
+}))
+
+sample_1 = rerun(10000, rpois(length(data_2017), mean(data_2017)+0.5))
+ts_1 = unlist(map(sample_1, function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2017)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6,mean(data_2017))) * length(x)
+  sum = sum + (o-e)^2/e
+}))
+d3 <- ggplot(data.frame(T = c(ts_0, ts_1), Hypothesis = c(rep('Null', 10000),
+rep('Alternative', 10000))), aes(x = T, fill = Hypothesis, color = Hypothesis))+ geom_density(alpha = 0.75, show.legend = FALSE)
+```
+
+```{r include=FALSE}
+(q_2017 <- quantile(ts_0, c(0.025, 0.975)))
+```
+
+```{r include=FALSE}
+p_2017 <- map_dbl(ts_1, ~.x < q_2017[1] || .x > q_2017[2])
+mean(p_2017)
+```
+
+```{r include=FALSE}
+sample_03 = rerun(10000, rpois(length(data_2018), mean(data_2018)))
+ts_0 = unlist(map(sample_03, function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2018)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6, mean(data_2018))) * length(x)
+  sum = sum + (o-e)^2/e
+}))
+
+sample_1 = rerun(10000, rpois(length(data_2015), mean(data_2018)+0.5))
+ts_1 = unlist(map(sample_1, function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2018)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6,mean(data_2018))) * length(x)
+  sum = sum + (o-e)^2/e
+}))
+d4 <- ggplot(data.frame(T = c(ts_0, ts_1), Hypothesis = c(rep('Null', 10000),
+rep('Alternative', 10000))), aes(x = T, fill = Hypothesis, color = Hypothesis))+ geom_density(alpha = 0.75, show.legend = FALSE)
+```
+
+```{r include=FALSE}
+(q_2018 <- quantile(ts_0, c(0.025, 0.975)))
+```
+
+```{r include=FALSE}
+p_2018 <- map_dbl(ts_1, ~.x < q_2018[1] || .x > q_2018[2])
+mean(p_2018)
+```
+
+```{r include=FALSE}
+sample_04 = rerun(10000, rpois(length(data_2019), mean(data_2019)))
+ts_0 = unlist(map(sample_04, function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2019)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6, mean(data_2019))) * length(x)
+  sum = sum + (o-e)^2/e
+}))
+
+sample_1 = rerun(10000, rpois(length(data_2015), mean(data_2019)+0.5))
+ts_1 = unlist(map(sample_1, function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2019)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6,mean(data_2019))) * length(x)
+  sum = sum + (o-e)^2/e
+}))
+d5 <- ggplot(data.frame(T = c(ts_0, ts_1), Hypothesis = c(rep('Null', 10000),
+rep('Alternative', 10000))), aes(x = T, fill = Hypothesis, color = Hypothesis))+ geom_density(alpha = 0.75, show.legend = FALSE)
+```
+
+```{r include=FALSE}
+(q_2019 <- quantile(ts_0, c(0.025, 0.975)))
+```
+
+```{r include=FALSE}
+p_2019 <- map_dbl(ts_1, ~.x < q_2019[1] || .x > q_2019[2])
+mean(p_2019)
+```
+
+```{r include=FALSE}
+sample_05 = rerun(10000, rpois(length(data_2020), mean(data_2020)))
+ts_0 = unlist(map(sample_05, function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2020)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6, mean(data_2020))) * length(x)
+  sum = sum + (o-e)^2/e
+}))
+
+sample_1 = rerun(10000, rpois(length(data_2015), mean(data_2020)+0.5))
+ts_1 = unlist(map(sample_1, function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2020)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6,mean(data_2020))) * length(x)
+  sum = sum + (o-e)^2/e
+}))
+d6 <- ggplot(data.frame(T = c(ts_0, ts_1), Hypothesis = c(rep('Null', 10000),
+rep('Alternative', 10000))), aes(x = T, fill = Hypothesis, color = Hypothesis)) + geom_density(alpha = 0.75, show.legend = FALSE)
+```
+
+```{r include=FALSE}
+(q_2020 <- quantile(ts_0, c(0.025, 0.975)))
+```
+
+```{r include=FALSE}
+p_2020 <- map_dbl(ts_1, ~.x < q_2020[1] || .x > q_2020[2])
+mean(p_2020)
+```
+
+```{r echo=FALSE}
+plot_grid(d1, d2, d3, d4, d5, d6, ncol = 2)
+```
+
+After that, we calculate the critical regions as the interval between 2.5% and 97.5% quantile of each data set.
+
+We also generate another 10000 samples drawn from Poisson distribution with parameter $k^* = \hat k + 0.5$. Following the same procedure, we can similarly calculate 10000 values of statistic $X^{*2}_{k-1}$.
+
+Finally, we can get the power of our test as the probability of the 10000 $X^{*2}_{k-1}$ falling in the rejection region $(-\infty, 2.5\%\ \text{quantile}) \cup (97.5\%\ \text{quantile}, \infty)$.
+
+The rejection region and corresponding power is shown in the table below:
+
+\begin{table}[H]
+  \centering
+  \begin{tabular}{c|c|c}
+    \hline
+    \hline
+    Year & Rejection Region & Power\\
+    \hline
+    2015 & $(- \infty,1.715) \cup (15.976,+\infty)$ & 0.9874\\
+    2016 & $(- \infty,1.639) \cup (16.042,+\infty)$ & 0.9922\\
+    2017 & $(- \infty,1.756) \cup (16.270,+\infty)$ & 0.9893\\
+    2018 & $(- \infty,1.660) \cup (16.129,+\infty)$ & 0.9879\\
+    2019 & $(- \infty,1.748) \cup (16.215,+\infty)$ & 0.9887\\
+    2020 & $(- \infty,1.678) \cup (15.865,+\infty)$ & 0.9877\\
+    \hline
+    \hline
+  \end{tabular}
+  \caption{Results for Monte Carlo Hypothesis Test}
+\end{table}
+
+From table 1, we find that the power of our test is extremely close to 1, which indicates that the simulation of our test is powerful and successful.
+
+We then continue to prove that the mean and variance of a Poisson distribution are equal, and taking one sample into account is enough to show the relation between the two.
+
+To ensure the consistency, we reuse the sample generated to simulate data in 2015. For the 10000 samples, we calculate the value of their mean divided by variance. The density plot of the 10000 values is shown below:
+```{r echo=FALSE}
+mv_2015 <- unlist(map(sample_00, function(x){mean(x)/var(x)}))
+ggplot(data.frame(x = mv_2015), aes(x = x)) + geom_density(fill = "lightblue") + labs(x = "mean/var")
+```
+
+```{r include=FALSE}
+quantile(mv_2015, c(0.025, 0.975))
+```
+
+From the plot, we can obviously see that it follows a normal distribution and reaches the peak at 1. Still, to get the 95% confidence interval, we calculated the two-tailed quantile from 2.5% to 97.5%, which is $(0.8699, 1.1630)$. We can simply find that 1 lies in the confidence interval, thus we have confidence that the value of mean divided by variance is 1.
+
+Therefore, in the analysis part, we can calculate the real mean and variance. If their division is close to 1, then we will have great confidence to believe that the pattern of shootings follows a Poisson distribution.
+
+# Analysis
+
+As discussed in previous part, we are interested in the average number of fatal shootings per day, $k$. After estimating the value of the parameter k by $\hat{k}$, we also want to give a confidence interval for $\hat{k}$.
+In previous part, we introduce one estimator for parameter k:
+$$\hat{k} = \bar{X} = \frac{1}{n}\sum_{i=1}^{n}(X_i).$$
+Suppose that $X_1^*$, $X_2^*$,..., $X_n^*$ is a sample randomly picked with replacement from the original sample which has n data. We calculate the statistic 
+$$
+\hat{k}^*=\bar{X}^* = \frac{1}{n}\sum_{i=1}^{n}(X_i^*)
+$$
+with the newly-picked sample $X_1^*$, $X_2^*$,..., $X_n^*$.
+
+We do such re-sampling 10000 times. Then the resulted 10000 $\hat{k}^*$ values form the sampling distribution of $\hat{k}$. We will than take the basic bootstrap confidence intervals, which is calculated as follows:
+$$
+[2\hat{k}-\hat{k}_{0.975}^*,\space 2\hat{k}-\hat{k}_{0.025}^*],
+$$
+the normal bootstrap confidence intervals, which is calculated as follows:
+$$
+T \pm z_{\alpha} \sqrt{\frac{1}{B-1} \sum_{i=1}^{B}(T_i^*-\bar{T}^*)^2},
+$$
+and the percentile bootstrap confidence intervals:
+$$
+[T_{\alpha/2}^*, T_{1-\alpha/2}^*]
+$$
+
+The result of the bootstrap confidence interval is shown below in Table 2.
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{c|c|c|c|c}
+    \hline
+    \hline
+    Years & $T_1$ statistic & Normal & Basic & Percentile\\
+    \hline
+    2015 & 2.721 & (2.552, 2.896) & (2.543, 2.893) & (2.548, 2.899)\\
+    2016 & 2.620 & (2.448, 2.787) & (2.445, 2.795) & (2.445, 2.795)\\
+    2017 & 2.701 & (2.537, 2.864) & (2.543, 2.863) & (2.540, 2.860)\\
+    2018 & 2.712 & (2.523, 2.905) & (2.532, 2.912) & (2.512, 2.893)\\
+    2019 & 2.737 & (2.562, 2.914) & (2.556, 2.915) & (2.559, 2.918)\\
+    2020 & 2.797 & (2.630, 2.965) & (2.625, 2.962) & (2.633, 2.970)\\
+    \hline
+    \hline
+  \end{tabular}
+  \caption{Bootstrap for mean of each year}
+\end{table}
+
+Judging from the result, we can find that there is an increasing trend in the average number of fatal shootings per day. However, such increase is every slow. Last year (year 2020), the estimated average number increased by 2% and last year's estimated value fell in the confidence interval of last few years' estimated values. Our possible explanation for the increase is that due to the economic recession caused by coronavirus, the crime rate increased in 2020, thus leading to a higher fatal shooting number. Therefore, we believe the change in the number of fatal shootings in the past few years are still acceptable, and there is no need to be panic about the current situation and go parading on the street. But the increasing trend is still worth mentioning. We suggest that the number of fatal shootings should be paid attention in the coming years. If the increasing trend is speeding up more rapidly, maybe gun-using of the Police need further discussion.
+
+```{r include=FALSE}
+#2015:
+#bootstrap for mean/var
+mean_var_boot <- function(x, index) {mean(x[index])/var(x[index])}
+boot_mean_var <- boot(data_2015, statistic = mean_var_boot, R = 1000)
+boot.ci(boot_mean_var, type = c("norm", "basic", "perc"))
+```
+
+```{r include=FALSE}
+#bootstrap for mean:
+mean_boot <- function(x, index) {mean(x[index])}
+boot_mean <- boot(data_2015, statistic = mean_boot, R = 1000)
+boot.ci(boot_mean, type = c("norm", "basic", "perc"))
+```
+
+
+```{r include=FALSE}
+#2016:
+#bootstrap for mean/var
+mean_var_boot <- function(x, index) {mean(x[index])/var(x[index])}
+boot_mean_var <- boot(data_2016, statistic = mean_var_boot, R = 1000)
+boot.ci(boot_mean_var, type = c("norm", "basic", "perc"))
+```
+```{r include=FALSE}
+#bootstrap for mean:
+mean_boot <- function(x, index) {mean(x[index])}
+boot_mean <- boot(data_2016, statistic = mean_boot, R = 1000)
+boot.ci(boot_mean, type = c("norm", "basic", "perc"))
+```
+
+```{r include=FALSE}
+#2017:
+#bootstrap for mean/var
+mean_var_boot <- function(x, index) {mean(x[index])/var(x[index])}
+boot_mean_var <- boot(data_2017, statistic = mean_var_boot, R = 1000)
+boot.ci(boot_mean_var, type = c("norm", "basic", "perc"))
+```
+
+```{r include=FALSE}
+#bootstrap for mean:
+mean_boot <- function(x, index) {mean(x[index])}
+boot_mean <- boot(data_2017, statistic = mean_boot, R = 1000)
+boot.ci(boot_mean, type = c("norm", "basic", "perc"))
+```
+
+```{r include=FALSE}
+#2018:
+#bootstrap for mean/var
+mean_var_boot <- function(x, index) {mean(x[index])/var(x[index])}
+boot_mean_var <- boot(data_2018, statistic = mean_var_boot, R = 1000)
+boot.ci(boot_mean_var, type = c("norm", "basic", "perc"))
+```
+
+```{r include=FALSE}
+#bootstrap for mean:
+mean_boot <- function(x, index) {mean(x[index])}
+boot_mean <- boot(data_2018, statistic = mean_boot, R = 1000)
+boot.ci(boot_mean, type = c("norm", "basic", "perc"))
+```
+
+```{r include=FALSE}
+#2019:
+#bootstrap for mean/var
+mean_var_boot <- function(x, index) {mean(x[index])/var(x[index])}
+boot_mean_var <- boot(data_2019, statistic = mean_var_boot, R = 1000)
+boot.ci(boot_mean_var, type = c("norm", "basic", "perc"))
+```
+
+```{r include=FALSE}
+#bootstrap for mean:
+mean_boot <- function(x, index) {mean(x[index])}
+boot_mean <- boot(data_2019, statistic = mean_boot, R = 1000)
+boot.ci(boot_mean, type = c("norm", "basic", "perc"))
+```
+
+```{r include=FALSE}
+#2020:
+#bootstrap for mean/var
+mean_var_boot <- function(x, index) {mean(x[index])/var(x[index])}
+boot_mean_var <- boot(data_2020, statistic = mean_var_boot, R = 1000)
+boot.ci(boot_mean_var, type = c("norm", "basic", "perc"))
+```
+
+```{r include=FALSE}
+#bootstrap for mean:
+mean_boot <- function(x, index) {mean(x[index])}
+boot_mean <- boot(data_2020, statistic = mean_boot, R = 1000)
+boot.ci(boot_mean, type = c("norm", "basic", "perc"))
+```
+
+Now we calculate the $T_1$ statistics from the fatal-police-shootings data and try to compare them with the critical regions we calculate in the "Simulation" part by using 10000 randomly generated samples. And we find that the real statistic of every year from 2015 to 2020 do not fall into the rejection region, which means we cannot reject $H_0: X \sim \text{Poisson}(k), k=\hat{k}$. 
+
+To gather more evidence for our conclusion, we calculate the $T_2$ statistics from our data. The result is shown below in Table 3. The result indicates that although year 2018 is a little abnormal, the mean of our data is closely equal to the variance of our data, which is a major characteristic of Poisson distribution. Therefore, we tend to believe that American police's shooting habit do not change much in the past few years.
+
+\begin{table}[ht]
+  \centering
+  \begin{tabular}{c|c|c|c|c}
+    \hline
+    \hline
+    Years & $T_2$ statistics & Normal & Basic & Percentile\\
+    \hline
+    2015 & 0.9364 & (0.8031, 1.0544) & (0.7983, 1.0455) & (0.8274, 1.0746)\\
+    2016 & 1.0348 & (0.887, 1.173) & (0.875, 1.161) & (0.908, 1.195)\\
+    2017 & 1.0323 & (0.873, 1.178) & (0.860, 1.168) & (0.897, 1.205)\\
+    2018 & 0.7843 & (0.6557, 0.8948) & (0.6514, 0.8871) & (0.6815, 0.9172)\\
+    2019 & 0.9084 & (0.7816, 1.0212) & (0.7752, 1.0127) & (0.8040, 1.0415)\\
+    2020 & 0.9507 & (0.8108, 1.0813) & (0.7964, 1.0708) & (0.8306, 1.1050)\\
+    \hline
+    \hline
+  \end{tabular}
+  \caption{Bootstrap for mean/var of each year}
+\end{table}
+
+Up to now, we have shown that every year's thousands of fatal police shootings happening in the United States do follow a predictable pattern: the Poisson distribution. This finding can answer the question that whether the pattern of police shooting change in recent years. By seeing the evidence that every year's data all follow a Poisson distribution, we can say that American police's habit of shooting, at least from the angle of number of shootings, do not change much.
+
+
+```{r include=FALSE}
+test_s = function(x){
+  sum = 0
+  for (i in 0:6){
+    o = length(x[x==i])
+    e = dpois(i, mean(data_2020)) * length(x)
+    sum = sum + (o-e)^2/e
+  }
+  o = length(x[x >= 7])
+  e = (1-ppois(6, mean(data_2020))) * length(x)
+  sum = sum + (o-e)^2/e
+}
+print(test_s(data_2015))
+print(test_s(data_2016))
+print(test_s(data_2017))
+print(test_s(data_2018))
+print(test_s(data_2019))
+print(test_s(data_2020))
+```
+
+# Discussion
+
+In this research project, we calculate a confidence interval for the mean fatal shooting numbers per day using bootstrap. Judging from the value and the confidence interval, we conclude that the current police shooting situation is still acceptable. Using Goodness-of-fit test, we perform Monte Carlo hypothesis test and accept that our fatal-police-shootings data followed Poisson distribution every year. The rejection region is given by simulating samples drawn from Poisson distribution. We also calculate the ratio of mean to variance of our data and gather more evidence that the pattern of shooting numbers remained unchanged in the past years. Therefore, we believe American police's habit of shooting do not change much so far, but gun-using of the Police is still a problem worth mentioning in the further.
+
+So what's the meaning of doing this project or why should anyone care about this? Actually, by making full use of the kind of data collected by The Washington Post, both the public and police forces can be alert to real changes in the incidence of fatal police shootings, but not be either unnecessarily alarmed or falsely reassured by apparent variability.
+
+What's more, from a statistical point of view, for the data to be most useful, we need to think carefully about the most appropriate way to present the data for different audiences. For the media and public consumption, our comments must remain firmly based on the data and should always seek to avoid either unnecessary alarm or unwanted complacency [4]. For policymakers, the analysis should rather be focused to support proportionate risk-based decision-making, avoiding unnecessary new initiatives and making best use of existing resources. 
+
+This project only analyzed a certain angle of fatal-police-shootings data: the number of shootings per day, which means there are many angles left for us to do in the future research. For example, we can divide the data according to the races to see whether there is serious racial discrimination of the fatal police shooting. From roughly observing the data, we can see that the number of white Americans is larger than black Americans. However, when considering the proportion of a race in the national population, the rate at which black Americans are killed by police is probably higher than the rate for white Americans. Besides, we can put the elements of gender, age and position into consideration. After analyzing all these parameters, we can have a more general idea about American police's habits of shooting.
+
+# Reference
+\begin{itemize}
+
+\item[1] "George Floyd Death Homicide, Official Post-Mortem Declares". BBC News, 2021, \url{https://www.bbc.com/news/world-us-canada-52886593}.
+
+\item[2] The Washington Post. Fatal force. \url{https://www.washingtonpost.com/graphics/investigations/police-shootings-database/}. Web.
+
+\item[3] "washingtonpost/data-police-shootings", GitHub, 2021. [Online]. Available: \url{https://github.com/washingtonpost/data-police-shootings}.
+
+\item[4] D. Spiegelhalter and A. Barnett. London murders: a predictable pattern? Significance, 6(1):5–8, 2009.
+\url{http://onlinelibrary.wiley.com/doi/10.1111/j.1740-9713.2009.00334.x/abstract}.
+
+\end{itemize}

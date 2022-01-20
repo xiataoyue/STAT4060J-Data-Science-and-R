@@ -1,0 +1,245 @@
+---
+title: "Homework 4"
+author: "Taoyue Xia"
+date: "Due June 13 at 11:59pm"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(3910349)
+library(tidyverse)
+```
+
+## Question 1 (3 points)
+
+### Part (a) (1 point)
+
+Consider the **mixture of multivariate Normals $(X_1, X_2)$** given by:
+
+\[
+\begin{align}
+  \mathbf{U} = \begin{pmatrix}U_1 \\ U_2 \end{pmatrix} &\sim N_2\left( \begin{pmatrix}0 \\0\end{pmatrix} , \begin{pmatrix} 2.5 & -1 \\ -1 & 1.75 \end{pmatrix} \right) \\
+  \mathbf{V} = \begin{pmatrix}V_1 \\ V_1 \end{pmatrix} &\sim N_2\left(\begin{pmatrix}1 \\ 0.5\end{pmatrix}, \begin{pmatrix}1 & 0.5 \\ 0.5 & 1.25\end{pmatrix}\right) \\
+  W &\sim \text{Bernoulli}(0.75)  \\
+  \mathbf{X} = \begin{pmatrix}X_1 \\ X_2 \end{pmatrix} &= W \mathbf{U} + (1 - W) \mathbf{V}
+\end{align}
+\]
+
+Implement a random number generator for this distribution and plot 100 random $(X_1, X_2)$ points. Feel free to use the Cholesky decomposition based MVN generator from class or one of the methods from Chapter 3 of the book by Maria Rizzo.
+
+### Answer (a)
+```{r}
+Choleski <- function(n, mu, Sigma) {
+  d <- length(mu)
+  Q <- chol(Sigma)
+  Z <- matrix(rnorm(n * d), nrow = n, ncol = d)
+  X <- Z %*% Q + matrix(mu, n, d, byrow = TRUE)
+  X
+}
+
+mu1 <- c(0, 0)
+Sigma1 <- matrix(c(2.5, -1, -1, 1.75), 2, 2)
+U <- Choleski(100, mu1, Sigma1)
+
+mu2 <- c(1, 0.5)
+Sigma2 <- matrix(c(1, 0.5, 0.5, 1.25), 2, 2)
+V <- Choleski(100, mu2, Sigma2)
+
+W <- rbinom(100, size = 1, prob = 0.75)
+mixture <- function(n, U, V, W) {
+  X <- matrix(0, n, 2)
+  for(i in 1:n) {
+    if(W[i] == 1) X[i, ] = U[i, ]
+    else X[i, ] = V[i, ]
+  }
+  X
+}
+X <- mixture(100, U, V, W)
+pairs(X)
+```
+
+### Part (b) (1 point)
+
+For any two bivariate Normal distributions $U$ and $V$ with means $E(\mathbf{U}) = \mathbf{\mu_1} = (\mu_{11}, \mu_{12})^T$ and $E(\mathbf{V}) = \mathbf{\mu_2} = (\mu_{21}, \mu_{22})^T$, prove that the mean of the mixture with mixing parameter $\theta$ is a weighted sum of the component means:
+$$E \begin{pmatrix} X_1 \\ X_2 \end{pmatrix} = \begin{pmatrix} \theta \mu_{11} + (1 - \theta) \mu_{21} \\ \theta \mu_{12} + (1 - \theta) \mu_{22} \end{pmatrix}$$
+
+### Answer (b)
+$$E(U) = E\begin{pmatrix} U_1 \\ U_2 \end{pmatrix} = \begin{pmatrix} \frac{1}{n}\sum_{i = 1}^n u_{1i} \\ \frac{1}{n}\sum_{i = 1}^n u_{2i}\end{pmatrix} = \begin{pmatrix} \mu_{11}\\ \mu_{12}\end{pmatrix}$$
+$$E(V) = E\begin{pmatrix} V_1 \\ V_2 \end{pmatrix} = \begin{pmatrix} \frac{1}{n}\sum_{i = 1}^n v_{1i} \\ \frac{1}{n}\sum_{i = 1}^n v_{2i}\end{pmatrix} = \begin{pmatrix} \mu_{21}\\ \mu_{22}\end{pmatrix}$$
+If we conduct n times the sampling, for $X = WU + (1-W)V$ with $W$ as a Bernoulli Distribution $W \sim Bernoulli(\theta)$, when $w_i = 1$, $x_i = u_i$, when $w_i = 0$, $x_i = v_i$ ($i = 1,\cdots,n$). Thus
+
+$$E(X_1) = \frac{1}{n}(\frac{\sum_{i = 1}^n u_{1i}}{n}\cdot (n\theta) + \frac{\sum_{i = 1}^n v_{1i}}{n}\cdot(n(1-\theta))) = \frac{\theta \sum_{i = 1}^n u_{1i} + (1-\theta) \sum_{i = 1}^n v_{1i}}{n} = \theta \mu_{11} + (1-\theta) \mu_{21}$$
+Similarly, 
+$$E(X_2) = \theta \mu_{12} + (1-\theta) \mu_{22}$$
+Therefore, we can conclude that:
+$$E\begin{pmatrix} X_1\\ X_2\end{pmatrix} = \begin{pmatrix} \theta \mu_{11} + (1-\theta) \mu_{21}\\ \theta \mu_{12} + (1-\theta) \mu_{22}\end{pmatrix}$$
+Proof done.
+
+### Part (c) (1 point)
+
+Using your MVN generator from part (a), estimate the covariance matrix of $(X_1, X_2)$ using 10,000 samples. If you arrange your draws in a 10,000 by 2 matrix, you can use the `cov` function to estimate the covariance. 
+
+From your results, would you say that the covariance of a mixture can be expressed as the weighted average of the component covariances? 
+
+```{r}
+U <- Choleski(10000, mu1, Sigma1)
+V <- Choleski(10000, mu2, Sigma2)
+W <- rbinom(10000, size = 1, prob = 0.75)
+X <- mixture(10000, U, V, W)
+cov(X)
+Sigma1 * 0.75 + Sigma2 * 0.25
+```
+We see that the difference between the covariance of the mixture $X$ and the weighted average of the component covariances are small. Therefore, we can say that the covariance of the mixture can be expressed as the weighted average of the component covariances.
+
+## Question 2 (3 points)
+
+Continuing our use of the Laplace distribution, we will use it as a candidate distribution for the standard Normal $N(0,1)$ distribution using an accept-reject algorithm.
+
+Recall that the probability distribution for a standard Normal is given by:
+
+$$\phi(x) = \frac{1}{\sqrt{2 \pi}} \exp\left\{ - \frac{x^2}{2} \right\}$$
+
+and the Laplace is given by
+$$f(x) = \frac{1}{2} \exp\left\{- |x| \right\}$$
+
+### Part (a) (1 pt)
+
+Find a constant $c$ such that:
+$$ \frac{c f(x)}{\phi(x)} \ge 1$$
+for all $x \in (-\infty, \infty)$.
+
+### Answer (a)
+From the above inequality we can obtain:
+$$c \geq \frac{\phi(x)}{f(x)} = \sqrt{\frac{2}{\pi}} \cdot e^{-\frac{x^2}{2} + |x|}$$
+For the term $\frac{x^2}{2} + |x|$, its maximum value is $\frac{1}{2}$, thus
+$$c \geq \sqrt{\frac{2}{\pi}} \cdot e^{\frac{1}{2}}$$
+Therefore, choose c as the minimum value $\sqrt{\frac{2}{\pi}} \cdot e^{\frac{1}{2}}$
+
+### Part (b) (1 pt)
+
+Implement an accept-reject algorithm for standard Normals using $c$ and our usual source of Laplace random variables.
+
+```{r}
+rlaplace <- function(n, mean = 0) {
+  s <- 2 * rbinom(n, size = 1, p = 0.5) - 1
+  m <- rexp(n) 
+  s * m + mean
+}
+```
+
+Using 1000 samples, verify that your Accept-Reject algorithm works using a QQ-plot (see `geom_qq`).
+
+### Answer (b)
+```{r}
+k <- 1000
+ys <- rlaplace(k)
+g <- function(y) {0.5 * exp(-abs(y))}
+c <- sqrt(2/pi) * exp(0.5)
+ratios <- dnorm(ys) / (c * g(ys))
+
+us <- runif(1000)
+accept_g <- us < ratios
+accepted_g <- ys[accept_g]
+rejected_g <- ys[!accept_g]
+ggplot(data.frame(x = accepted_g), aes(sample = x)) + geom_qq() + geom_qq_line()
+```
+
+
+### Part (c) (1 pt)
+
+Now implement an importance sampling algorithm for standard Normals using the Laplace distribution as the envelope distribution in order to estimate
+
+$$E(X^2)$$
+where $X \sim N(0, 1)$. Use 1000 samples and provide a 95\% confidence interval for $E(X^2)$.
+
+### Answer (c)
+```{r}
+k <- 1000
+ys <- rlaplace(k)
+value <- ys^2 * dnorm(ys) / g(ys)
+mean(value)
+t.test(value, conf.level = 0.95)$conf.int
+```
+
+## Question 3 (3 pts)
+
+Consider the density (known up to a constant) given by:
+
+$$f(x) \propto \sin(\pi  x^2), \quad 0 < x < 1$$
+
+```{r}
+curve(sin(pi * x^2), ylab = "f*(x)")
+```
+
+### Part (a) (1 pts)
+
+We want to estimate $E(X)$ using importance sampling (resampling).
+
+Using a uniform [0, 1] distribution as the envelope, use reweighted importance sampling to estimate $E(X)$. Estimate the variance of the **estimator** (we'll compare it to another estimator in part (b)).
+
+### Answer (a)
+```{r}
+yu <- runif(10000)
+au <- sin(pi * yu^2) / dunif(yu)
+omegau <- au / sum(au)
+reweighted_yu <- yu * 10000 * omegau
+mean(reweighted_yu)
+var(reweighted_yu)
+```
+
+### Part (b) (2 pt)
+
+The uniform distribution is a special case of the [Beta distribution](https://en.wikipedia.org/wiki/Beta_distribution) with parameters $\alpha = \beta = 1$. It works as an envelope, but it does not very carefully follow the target function: 
+$$E(X) \propto \int_0^1 x \sin(\pi x^2) \, dx$$
+```{r}
+curve(x * sin(pi * x^2))
+```
+
+Propose a set of parameters $\alpha$ and $\beta$ that leads to a better envelope distribution. Use this distribution (see the `rbeta` function) to implement importance sampling to estimate $E(X)$ and the variance of the estimator. Did this estimator have lower variance than the estimator based on the uniform candidate?
+
+Useful tip: A Beta($\alpha, \beta$) with $\alpha > 1$ and $\beta > 1$ will have a mode at $(\alpha - 1) / (\alpha + \beta - 2)$. This can be useful to graph candidate distributions against the target:
+
+```{r}
+## target function has a mode at approximately 0.76
+target_height <- 0.76 * sin(pi * 0.76^2)
+
+## candidate beta distribution alpha = beta = 2, so a mode at 1/2
+cand_height <- dbeta(1/2, 2, 2)
+
+tc_ratio <- target_height/cand_height
+
+curve(x * sin(pi * x^2))
+curve(tc_ratio * dbeta(x, 2, 2), add = TRUE, col = "red")
+```
+
+
+### Answer (b)
+```{r}
+yr <- rbeta(10000, 4, 2)
+ar <- sin(pi * yr^2) / dbeta(yr, 4, 2)
+omegar <- ar / sum(ar)
+reweighted_yr <- yr * 10000 * omegar
+mean(reweighted_yr)
+var(reweighted_yr)
+```
+We can obviously see that using the importance sampling by beta distribution with $\alpha = 4,\ \beta = 2$, which means the distribution will have a mode at 0.75, quite close to 0.76, the variance will be far smaller than that of uniform distribution.
+
+## Question 4 (1 pts)
+
+It is time to start thinking about research projects. The core research question drives what data are required, what methods are considered, appropriate visualizations, etc. You may discuss your responses to this question with your group, but each student should practice writing the response individually. This is practice writing, and you will not be committing to performing this research for your final research project.
+
+Do one of the following:
+
+1. Look at the three starter research projects available on Canvas. Pick one project and write a new research question based on the existing paper. It should be motivated by research questions in the paper, but not identical to it. Describe data that would help answer your research question. These data may be included in the exisiting data or may be data that you would need to find.
+
+2. For a topic of your choice, write a research questions (three to four sentences total). The question should be clearly motivated and include a justification of who would be interested in your research results. Here is an example (unlike the example, you do not need give a specific model at this time, but the more specific the research question the better):
+
+> Political committees in the United States play a significant role in supporting candidates, lobbying for policies, and organizing citizens. Political committees may also support other political committees through monetary contributions. Modeling the structure of these contributions will better help citizens understand the connections between committees and the role of money in politics. In particular, do political committees allocate their contributions to other committees randomly or are the amounts of contributions specifically targeted in some way? Specifically, do contributions follow the well known Benford's law, a model describing the distribution of leading digits for many natural processes, or do they follow some other systematic pattern?
+
+Write a few sentences describing an ideal data source. What kinds of variables are required? Do you need data collected from a specific location or time? Do you need observations over time or space? Does this data support any other interesting research questions?
+
+> Example: To see if Benford's law holds, I require data showing how much money political comittees spend on other political committees. I would like to have data over multiple years so I can also compare it to changes in legislation that may result in changes in the amounts of money donated. I would like to have variables describing the political committees such as if they have a lobbying group or are aligned with a particular political party. Since these data describe relationships among committees, this network could also be analyzed to learn about connections between the committees.
+
+### Answer
+> In the research project "US School Shootings", the authors analyze shootings at school hours, the characteristics of victims, and the type of shootings, whether they are indiscriminates, suicides, etc. However, for some boarding schools, shootings sometimes happen at time of relax. How much proportion do after-school shootings occupy in all the shootings since 1999? In this sense, I need the statistics of shootings' time accurate to hours. Also, I need the count of victims in each shooting event. This can help to analyze the seriousness of all kinds of shootings.

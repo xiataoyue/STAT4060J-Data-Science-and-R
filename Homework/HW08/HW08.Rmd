@@ -1,0 +1,245 @@
+---
+title: "HW 08"
+author: "Taoyue Xia"
+date: "Due July 13, 11:59pm"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(29003021)
+library(tidyverse)
+```
+
+
+## Question 1 (3 pts)
+
+As we have done before, we will generate Laplace random variables:
+
+$$f(x) = \frac{1}{2} \exp\{ - |x - \theta| \}$$
+
+For $\theta = 0$, use a Normal candidate to create a **random walk Metropolis-Hastings** algorithm to draw Laplace random variables. 
+
+Create three chains with $\sigma = 0.25$, $\sigma = 1$, $\sigma = 2$. Start each chain $X(0) = 0$, $X(0) = 1$, $X(0) = 10$ (so overall, you should create 9 chains). What do you notice about the chains? 
+
+### Answer
+```{r}
+f <- function(x){
+  1 / 2 * exp(-abs(x))
+}
+
+unif_chain <- function(sigma, s, B = 5000) {
+  chain <- numeric(B); chain[1] <- s ; rejects <- 0
+  for (i in 2:B) {
+    candidate <- chain[i - 1] + rnorm(1, 0, sigma)
+    ratio <- f(candidate) / f(chain[i - 1])
+    if (runif(1) <= ratio) {
+        chain[i] <- candidate
+    } else {
+        chain[i] <- chain[i - 1]
+        rejects <- rejects + 1
+    }
+  }
+  list(reject_rate = rejects / B, chain = chain)
+}
+
+laplace00 <- unif_chain(0.25, 0)
+laplace01 <- unif_chain(0.25, 1)
+laplace02 <- unif_chain(0.25, 10)
+laplace10 <- unif_chain(1, 0)
+laplace11 <- unif_chain(1, 1)
+laplace12 <- unif_chain(1, 10)
+laplace20 <- unif_chain(2, 0)
+laplace21 <- unif_chain(2, 1)
+laplace22 <- unif_chain(2, 10)
+```
+
+For the case $X(0) = 0$
+```{r}
+par(mar = c(4, 4, 2, 2))
+k <- 1000
+plot(NULL, xlim = c(1, k), ylim = 1.5 * range(c(laplace00$chain, laplace10$chain, laplace20$chain)))
+rs <- rainbow(3)
+lines(1:k, laplace20$chain[1:k], col = rs[1])
+lines(1:k, laplace10$chain[1:k], col = rs[2])
+lines(1:k, laplace00$chain[1:k], col = rs[3])
+legend("bottomright", legend = c(2, 1, 0.25), fill = rs)
+```
+
+For the case $X(0) = 1$
+```{r}
+par(mar = c(4, 4, 2, 2))
+k <- 1000
+plot(NULL, xlim = c(1, k), ylim = 1.5 * range(c(laplace01$chain, laplace11$chain, laplace21$chain)))
+rs <- rainbow(3)
+lines(1:k, laplace21$chain[1:k], col = rs[1])
+lines(1:k, laplace11$chain[1:k], col = rs[2])
+lines(1:k, laplace01$chain[1:k], col = rs[3])
+legend("bottomright", legend = c(2, 1, 0.25), fill = rs)
+```
+For the case $X(0) = 10$
+```{r}
+par(mar = c(4, 4, 2, 2))
+k <- 1000
+plot(NULL, xlim = c(1, k), ylim = 1.5 * range(c(laplace02$chain, laplace12$chain, laplace22$chain)))
+rs <- rainbow(3)
+lines(1:k, laplace22$chain[1:k], col = rs[1])
+lines(1:k, laplace12$chain[1:k], col = rs[2])
+lines(1:k, laplace02$chain[1:k], col = rs[3])
+legend("bottomright", legend = c(2, 1, 0.25), fill = rs)
+```
+The reject rates of the nine chains:
+```{r results='hold'}
+paste('The reject rate for sigma = 0.25 and X(0) = 0 is:', laplace00$reject_rate)
+paste('The reject rate for sigma = 0.25 and X(0) = 1 is:', laplace01$reject_rate)
+paste('The reject rate for sigma = 0.25 and X(0) = 10 is:', laplace02$reject_rate)
+paste('The reject rate for sigma = 1 and X(0) = 0 is:', laplace10$reject_rate)
+paste('The reject rate for sigma = 1 and X(0) = 1 is:', laplace11$reject_rate)
+paste('The reject rate for sigma = 1 and X(0) = 10 is:', laplace12$reject_rate)
+paste('The reject rate for sigma = 2 and X(0) = 0 is:', laplace20$reject_rate)
+paste('The reject rate for sigma = 2 and X(0) = 1 is:', laplace21$reject_rate)
+paste('The reject rate for sigma = 2 and X(0) = 10 is:', laplace22$reject_rate)
+```
+
+We can notice that the reject rate for chains differs a lot when $\sigma$ is chosen for different values. The larger $\sigma$ is, the higher reject rate. The different choice of $X(0)$ only slightly influence the reject rate.
+
+
+
+
+## Question 2 (6 pts)
+
+Recall the Beta distribution, which is defined for $\theta \in (0, 1)$ with parameters $\alpha$ and $\beta$, has a density proportional to:
+$$\theta^{\alpha - 1} (1 - \theta)^{\beta - 1}$$
+
+The Dirichlet distribution generalizes the the Beta distribution for $k$ such $\theta_i$ values such that $\sum_{i=1}^k \theta_k = 1$. It has $k$ parameters, which we will label $\delta_i$ and has density proportional to:
+$$p(\delta_1, \delta_2, \ldots, \delta_k) \propto \theta_1^{\delta_1 - 1} \theta_2^{\delta_2 - 1} \cdots \theta_k^{\delta_k - 1}$$
+
+In particular, let us consider the a Dirichlet distribution with three components, which we can also write as:
+$$p(\delta_1, \delta_2, \delta_3) \propto \theta_1^{\delta_1 - 1} \theta_2^{\delta_2 - 1} (1 - \theta_1 - \theta_2)^{\delta_3 - 1}$$
+
+
+Suppose that $X_1$ counts the number observations of type 1, $X_2$ counts the numbers of observatinos of type 2, and $X_3$ counts the number of observations of type 3 in a sample (e.g., red, blue, and green cars observed on the highway). We will treat $n = X_1 + X_2 + X_3$ as fixed, so that our data have a **multinomial** distribution, which generalizes the binomial distribution. As with the binomial distribution, we can notice that $X_3 = n - X_1 - X_2$, and so is redundant. 
+
+The probability mass function for a multinomial distribution is proporational to
+$$f(x_1, x_2 \, |\, \theta_1, \theta_2) \propto \theta_1^{x_1} \theta_2^{x_2} (1 - \theta_1 - \theta_2)^{n - x_1 - x_2}$$
+
+### Part (a) (2 pts)
+
+Consider the Bayesian model:
+\[
+\begin{aligned}
+ (\theta_1, \theta_2) &\sim \text{Dirichlet}(\delta_1, \delta_2, \delta_3)\\ 
+ (X_1, X_2) &\sim \text{Multinomial}(n, \theta_1, \theta_2)
+\end{aligned}
+\]
+
+Show that the posterior distribution $\pi(\theta_1, \theta_2 \, | \, x_1, x_2)$ has a Dirichlet distribution with parameters $(x_1 + \delta_1, x_2 + \delta_2, n - x_1 - x_2 + \delta_3)$. (Hint: find something that is proportional to the posterior distribuiton and argue that the only possible normalizing constant must lead to a Dirichlet distribution with the given parameters.)
+
+### Answer (a)
+Denote the coefficient for $f(\theta_1, \theta_2 \, | \, x_1, x_2)$ as $a_1$, for $p(\theta_1, \theta_2)$ as $a_2$, we can get the following:
+$$
+\begin{aligned}
+  \pi(\theta_1, \theta_2 \, | \, x_1, x_2) &= \frac{f(\theta_1, \theta_2 \, | \, x_1, x_2)p(\theta_1, \theta_2)}{\int f(\theta_1, \theta_2 \, | \, x_1, x_2)p(\theta_1, \theta_2)d\theta}\\
+  &= \frac{a_1\theta_1^{x_1}\theta_2^{x_2}(1 - \theta_1 - \theta_2)^{n - x_1 - x_2}\cdot a_2\theta_1^{\delta_1 - 1}\theta_2^{\delta_2 - 1}(1 - \theta_1 - \theta2)^{\delta_3 - 1}}{c}\\
+  &= \frac{a_1a_2}{c}(\theta_1^{x_1 + \delta_1 - 1}\theta_2^{x_2 + \delta_2 - 2}(1 - \theta_1 - \theta_2)^{n - x_1 - x_2 + \delta_3 - 1}\\
+  &\propto \text{Dirichlet}(x_1 + \delta_1, x_2 + \delta_2, n - x_1 - x_2 + \delta_3)
+\end{aligned}
+$$
+As the above equations showed, $\pi(\theta_1, \theta_2 \, | \, x_1, x_2) \propto \text{Dirichlet}(x_1 + \delta_1, x_2 + \delta_2, n - x_1 - x_2 + \delta_3)$, so it must follow a Dirichlet distribution, thus we can conclude that
+$$\theta_1, \theta_2 \, | \, x_1, x_2 \sim \text{Dirichlet}(x_1 + \delta_1, x_2 + \delta_2, n - x_1 - x_2 + \delta_3)$$
+
+
+### Part (b) (2 pts)
+
+Find the **full conditional posteriors** (up to a normalizing constant) for $\theta_1$ and $\theta_2$. Argue that
+$$\theta_1 \, | \, \theta_2, x_1, x_2  \sim (1 - \theta_2) \, \text{Beta}(x_1 + \delta_1, n - x_1 - x_2 + \delta_3)$$ 
+and
+$$\theta_2 \, | \, \theta_1, x_1, x_2 \sim (1 - \theta_1) \, \text{Beta}(x_2 + \delta_2, n - x_1 - x_2 + \delta_3)$$ 
+To be clear about the notation, the above states that if $Y \sim \text{Beta}(x_2 + \delta_2, n - x_1 - x_2 + \delta_3)$ then $\theta_2 \, | \, \theta_1, x_1, x_2 = (1 - \theta) Y$.
+
+Hints:
+
+- If $X = a Y$, $a > 0$, and $Y$ has density $f(y)$, then $X$ has density $f(x / a) / a$
+- As we saw in class, be ruthless in dropping terms that don't pertain to the main parameter as long as you can maintain proportionality. E.g.
+$$f(x \, | \, y) \propto y!^y \frac{x y^2}{\sin(y)} \propto x$$
+- You may find it helpful to write $a_1 = x_1 + \delta_1$, $a_2 = x_2 + \delta_2$, and $b = n - x_1 - x_2 + \delta_3$ and do your proof using those as the parameters. 
+
+### Answer (b)
+Write $a_1 = x_1 + \delta_1$, $a_2 = x_2 + \delta_2$, and $b = n - x_1 - x_2 + \delta_3$. First, we look into $\pi(\theta_1 \, | \, \theta_2, x_1, x_2)$. Since $\theta_2$ is given, we can rewrite the proportional relation as:
+$$
+\pi(\theta_1 \, | \, \theta_2, x_1, x_2) \propto \theta_1^{a_1 - 1}(1 - \theta_1 - \theta_2)^{b - 1}
+$$
+Then assume that we have the random variable $X \sim (1 - \theta_2)\text{Beta}(a_1, b)$, we can know that:
+$$
+\begin{align}
+  f_X(\theta_1) &\propto \frac{(\frac{\theta_1}{1 - \theta_2})^{a_1 - 1}(1 - \frac{\theta_1}{1 - \theta_2})^{b - 1}}{1 - \theta_2}\\
+  &\propto \theta_1^{a - 1}(1 - \theta_1 - \theta_2)^{b - 1}
+\end{align}
+$$
+Combine the two proportions, we can obviously see that:
+$$\pi(\theta_1 \, | \, \theta_2, x_1, x_2) \propto (1 - \theta_2)\text{Beta}(a_1, b)$$
+Therefore, 
+$$\theta_1 \, | \, \theta_2, x_1, x_2 \sim (1 - \theta_2)\text{Beta}(x_1 + \delta_1, n - x_1 - x_2 + \delta_3)$$
+
+Similarly, we can also show that:
+$$\theta_2 \, | \, \theta_1, x_1, x_2 \sim (1 - \theta_1)\text{Beta}(x_2 + \delta_2, n - x_1 - x_2 + \delta_3)$$
+
+
+
+### Part (c) (2 pts)
+
+The United States has a labor law that requires employers to pay at least a minimum wage, set by law. A recent poll by Morning Consult/Politico asked voters their opinion on whether the Unite States Congress should raise the federal minimum wage.
+
+```{r}
+x_1 <- 806 # Congress should raise to $15/hr
+x_2 <- 435 # Congress should not raise the minimum wage
+x_3 <- 586 # Congress should raise to $11/hr
+n <- x_1 + x_2 + x_3
+```
+(I have excluded the 8% of the sample with no opinion)
+
+Modeling these results as multinomial, we will investigate the proportions of registered voters holding opinions about the federal minimum wage.
+
+Use the result from part (b) to implement a Gibbs sampler for $(\theta_1, \theta_2 \, \theta_3 | \, x_1, x_2)$. Let $\delta_1 = \delta_2 = \delta_3 = 1$.
+
+Create a chain of length 5000. Using the last 2000 iterations from the chain give estimates of $\theta_1$, $\theta_2$ and $\theta_3$. Also provide 95% credible intervals for each of the parameters (quantiles of the posterior marginal distributions).
+
+Estimate the probability that the \$15/hour wage is twice as popular no increase at all (i.e., $P(\theta_1 / \theta_2 > 2)$).
+
+### Answer (c)
+```{r}
+B <- 5000
+chain_gibbs <- matrix(0, ncol = B, nrow = 3)
+for(i in 2:B) {
+  chain_gibbs[1, i] <- (1 - chain_gibbs[2, i - 1]) * rbeta(1, x_1 + 1, n - x_1 - x_2 + 1)
+  chain_gibbs[2, i] <- (1 - chain_gibbs[1, i]) * rbeta(1, x_2 + 1, n - x_1 - x_2 + 1)
+  chain_gibbs[3, i] <- 1 - chain_gibbs[1, i] - chain_gibbs[2, i]
+}
+stationary <- chain_gibbs[, -(1:4000)]
+
+cat("For theta1\n")
+mean(stationary[1, ])
+quantile(stationary[1, ], c(0.025, 0.975))
+
+cat("For theta2\n")
+mean(stationary[2, ])
+quantile(stationary[2, ], c(0.025, 0.975))
+
+cat("For theta3\n")
+mean(stationary[3, ])
+quantile(stationary[3, ], c(0.025, 0.975))
+
+prob <- stationary[1, ] / stationary[2, ] > 2
+cat("Probability:\n")
+mean(prob)
+```
+
+
+## Question 3 (1 pt)
+
+Read the paper "Less than 2 degree C warming by 2100 unlikely." Briefly summarize the results (question, data, analysis). Carefully, read the section "Methods: Model Estimation". Explain how they used their posterior distribution to generate the predictions they used in the paper. 
+
+### Answer
+> The researchers want to predict the $\text{CO}_2$ emission and temperature change until 2100. They developed a joint Bayesian hierachical model for Gross Domestic Product (GDP) per capita and carbon intensity. After calculation and [prediction, they compare the result with IPCC's statistics, and find that 90% of $\text{CO}_2$ emission includes IPCC's two middle scenario. Their data includes population, GDP per capita and carbon intensity. They found that by 2100, the possible range of temperature increase is $2.0-4.9^{\circ}\text{C}$, with a median $3.2^{\circ}\text{C}$, and there is a 5% chance that the temperature increase will be less than $2.0^{\circ}\text{C}$.
+
+> They fitted Their model using Markov Chain Monte Carlo sampling. They created five chains for 100,000 iterations and discarded the first 5000 iterations. To make projections, they simulated many future trajectories of population, GDP per capita and carbon intensity jointly from their predictive distribution. To simulate one future trajectory, they first sampled model parameters from the posterior distribution by choosing the parameters from one iteration of the MCMC algorithm chosen at random. Then, for each set of model parameters sampled, they sampled model random errors from their conditional distribution given the parameters sampled. Finally, they projected the future trajectory forward using the model, the sampled model parameters, and the sampled model random errors. These three steps were repeated many times to generate many future possible trajectories and the prediction intervals were determined using quantiles of the resulting distribution.

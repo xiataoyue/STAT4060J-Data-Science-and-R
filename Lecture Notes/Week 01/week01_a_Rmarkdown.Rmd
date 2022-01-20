@@ -1,0 +1,184 @@
+# Lecture Notes for RMarkdown
+
+By default we start in "Markdown" mode. Markdown lets us structure documents:
+
+# Title
+## Main Section
+### Subsection 
+
+
+We can add various inline styling: *italics*, **bold**, `monospace fonts`. 
+
+- Lists/bullets
+- [links](http://www.wikipedia.org)
+- Quotes
+
+> This is a quoted section.
+
+```
+Large verbatim
+  bits of text
+    can be formatted
+      using backticks.
+```
+## Math Notation
+
+There is also a built in system for writing mathematical expressions. For example, $x^2$.
+
+You can also write "display" math like:
+
+$$f(x) = \sin(\theta x)$$
+
+or
+
+\[
+g(x, y) = \frac{x + y}{2}
+\]
+
+Various special symbols and operators have a backslash notation. Curly braces are used instead of parethenses to indicate arguments.
+
+$$\int_{-\infty}^\infty f(x) \, dx = 1$$
+This languae is also known at LaTeX ("lah-tech") math notation. A really useful website is [Detexify](http://detexify.kirelabs.org/classify.html) (only use "mathmode" symbols).
+
+Often times you want to have several lines that connect together. You can use the `aligned` environment:
+
+\[
+\begin{aligned}
+  f(x) &= x^2 + 2xy + y^2 \\
+  &= (x + y)^2
+\end{aligned}
+\]
+
+There are some additional references in this week's homework. Piazza will be a great place to share tips and tricks.
+
+
+## Integrating R
+
+When "knit", RMarkdown will process all the R code included and insert the results into the document (processes from top to bottom, errors stop processing.)
+
+To start an R code block add `{r}` after three backticks:
+
+```{r}
+# this is a comment in R, will be ignored by R
+print("hello")
+```
+
+You can also run code in your interpreter using Cmd-Return/Alt-Return.
+
+Expressions are evaluated and results printed out by default:
+```{r}
+7 + 2
+mean(rnorm(10))
+```
+
+It is also possible to give additional instructions to the R "chunk":
+```{r eval = FALSE}
+stop("This would halt the knitting if it ran")
+```
+But notice it does display.
+
+We can selectively hide the output of chunks, while keeping the code.
+```{r results = 'hide'}
+2 + 3 # will not display
+```
+
+Sometimes you want to suppress the code itself (`echo = FALSE`).
+```{r, echo = FALSE}
+print("Surprise!")
+```
+
+To combine both hiding code and output (but still executing):
+
+```{r include = FALSE}
+hidden_var <- 7
+```
+
+```{r}
+print(hidden_var)
+```
+
+For long calculations it can be useful to set `cache = TRUE` (just be careful if the cached chunk depends on other code or data that changes!)
+```{r, cache=TRUE}
+sum(1:1e10)
+```
+
+Inline results can be included using (backtick)r EXP (backtick). For example the sum of 3 and 4 is `r 3 + 4`.
+
+```{r hidden = TRUE}
+estimate_of_mean <- 87.2
+```
+
+We estimate the mean as `r estimate_of_mean`.
+
+
+### Plotting
+
+Let's simulate the class linear model (will cover simulation much more soon).
+```{r}
+n <- 100 # number of units in the study
+x <- runif(100, 10, 100)
+y <- 2 + 0.1 * x + rnorm(n, mean = 0, sd = 4) ## generates 
+xy <- data.frame(x = x,  y = y) # column "x" gets values in variable x
+```
+
+We'll emphasize the `ggplot2` library throughout the course. General strategy, map your columns to names (such as "x" and "y") and then add additional elements to the plot.
+```{r}
+library(ggplot2)
+ggplot(data = xy, aes(x = x, y = y)) + geom_point() + geom_abline(intercept = 2, slope = 0.1, color = "blue")
+```
+
+
+Sometimes tables are more helpful than plots. The `knitr` package provides a nice table formatting function:
+```{r}
+library(knitr)
+kable(xy[1:5, ]) # first 5 rows of the xy table
+```
+
+## RStudio Tools
+
+### Getting Help
+
+You can search the help in the left hand pane or interactively using
+
+```
+?t.test
+??"Student"
+```
+
+Several useful "Cheatsheets" under `Help` menu.
+
+
+### External Packages
+
+We will frequently use the following packages:
+
+```{r warning=FALSE}
+library(tidyverse)
+```
+
+Other packages in the `Packages` pane.
+
+### Sessions and Environment
+
+The `Console` pane contains a live R session. Session menu can
+
+- Restart the session
+- Set the working directory (makes it easier to load and save files)
+
+The `Environment` pane shows useful information about the current session.
+
+Example:
+```{r}
+random_letters <- sample(letters, size = 20, replace = TRUE)
+```
+
+### Debugging
+
+If you RMarkdown document fails on a given R chunk, it can be useful to `Run all chunks above` then step through the code:
+
+```{r}
+xy <- mutate(xy, z = x + y) # this depends on xy, so we need to get that from a previous chunk
+mean_x <- mean(xy$x)
+```
+
+R has a built in debugger as well, but this only works in pure .R scripts, not RMarkdown documents.

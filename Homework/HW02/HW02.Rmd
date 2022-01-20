@@ -1,0 +1,438 @@
+---
+title: "HW02"
+author: "Your Name"
+date: "Due 2021-05-30 at 10pm"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(288942)
+library(tidyverse)
+```
+
+## Caching
+
+Now that we are generating large numbers of random numbers, it can be useful to save those results in between knittings of the `.Rmd` file. You'll notice that several chunks below have the option `cache = TRUE` turned on. The first time you knit this document those chunks will be run and the results saved. Provided you do not change the code in those chunks, the they will not be re-run in the future, saving you time.
+
+Feel free to turn on caching for your own work, but some care is needed to make sure that if a cached chunk depends on results from an earlier chunk your will need to force rebuilding it by setting `cache.rebuild = TRUE` temporarily. 
+
+
+## Problem 1 (3 pts)
+
+Use Monte Carlo integration with 10,000 samples to get a 95\% confidence interval for each of the following integrals. R's uniform random number generator can be found at `runif`. Other built in distributions can be found under the help page for `Distributions`.
+
+```{r}
+k <- 10000 # often a good idea to define variables to hold things like the number of samples
+```
+
+To create the confidence interval, you can use R's `t.test` function.
+
+Here's an example to estimate the Gamma function from class $\theta = \int_{0}^1 (\log(1/x))^3 dx$.
+
+```{r}
+us <- runif(k)
+gus <- log(1/us)^3
+mean(gus) # estimate
+t.test(gus, conf.level = 0.95)$conf.int
+```
+## Part (a) (1 pt)
+
+$$\int_0^1 x^2 \, d x$$
+### Answer(a)
+```{r}
+rd <- runif(k)
+f <- rd^2
+mean(f)
+t.test(f, conf.level = 0.95)$conf.int
+```
+
+## Part (b) (1 pt)
+
+$$\int_0^1 \int_{-2}^{2} x^2 \cos (xy) \, dx \, dy$$
+
+Hint: for random variables $X$ and $Y$ with joint density function $f(x,y)$, $$E(h(X,Y)) = \int_{-\infty}^\infty \int_{-\infty}^\infty h(x, y) f(x, y) \, dx dy$$
+
+### Answer(b)
+After calculating the integral, we can transform it to:
+$$\int_{-2}^2 x\sin(x)\, dx$$
+or in y's format:
+$$\int_0^1 (\frac{8}{y} - \frac{4}{y^3})\sin(2y)\, dy$$
+The uniform distribution for x and y are $f_x(x) = \frac{1}{4}$ and $f_y(y) = 1$, so the total distribution is $f(x, y)=\frac{1}{4}$
+
+```{r}
+x <- runif(k, min = -2, max = 2)
+y <- runif(k)
+hx <- 4 * x^2 * cos(x*y)
+mean(hx)
+t.test(hx, conf.level = 0.95)$conf.int
+```
+
+## Part (c) (1 pts)
+
+$$\int_{-\infty}^\infty e^{-|x|} \, dx$$
+Hint: See the `Distributions` help page in R for a list of random number generators built into R. What distribution is defined on $(-\infty, \infty)$?
+
+### Answer(c)
+Use standard normal distribution to be f(X)
+```{r}
+g <- function(x) {exp(-abs(x))}
+h <- function(x) {g(x)/dnorm(x)}
+hx <- h(rnorm(k))
+mean(hx)
+t.test(hx, conf.level = 0.95)$conf.int
+```
+
+
+## Problem 2 (4 pts)
+
+Consider the distribution given by the density:
+
+$$f(x) = \frac{1}{\theta}, x \in [0, \theta], \theta > 0$$
+
+The Monte Carlo estimation lecture presents two estimators for $\theta$:
+
+- Method of Moments: $\tilde \theta = 2 \bar X$
+- Maximum Likelihood: $\hat \theta = \max_{i} X_i$
+
+As a general rule, statistics that make good estimators are often also good test statitistics, in the sense of having high power against alternative hypotheses about $\theta$. In this problem, we will quantify the Type I error and power of the two statistics.
+
+### Part (a) (1 pt)
+
+Suppose we wish to test the hypothesis that $\theta = 50$ against the alternative that $\theta = 51$. We will suppose we have a sample size of $n = 56$ observations. 
+
+$$H_0: \theta = 50 \text{ vs } H_1: \theta = 51$$
+
+As test statistics, we can use the estimators given above.
+
+Suppose the true $\theta = 50$. Find the null distribution for $\tilde \theta$ (method of moments) under when $\theta = 50$ and the alternative distribution when $\theta = 51$. Use 10,000 Monte Carlo replications (i.e., 10,000 samples of 56 observations) .
+
+Find a rejection region of the form $\tilde \theta > c$ such that $P(\tilde \theta > c \mid H_0) \le 0.05$. Find the power of this region when $\theta = 51$. 
+
+Here's some code to get you started:
+
+```{r, cache = TRUE}
+## the `rerun` function will run the code snippet in { ... } and save the results to a list.
+null_samples <- rerun(10000, { runif(56, min = 0, max = 50)})
+alt_samples  <- rerun(10000, { runif(56, min = 0, max = 51)})
+# you can use map_dbl() to compute your test statistic on each sample.
+```
+
+### Answer(a)
+```{r}
+null_samples <- rerun(10000, { runif(56, min = 0, max = 50)})
+alt_samples  <- rerun(10000, { runif(56, min = 0, max = 51)})
+mean_dist_null <- map_dbl(null_samples, function(x){2*mean(x)})
+mean_dist_alt <- map_dbl(alt_samples, function(x){2*mean(x)})
+df <- data.frame(null = mean_dist_null, 
+                 alt = mean_dist_alt) %>% gather %>% mutate(key = factor(key))
+ggplot(df, aes(x = value, fill = key)) + geom_density(alpha = 0.75)
+rr <- quantile(mean_dist_null, 0.95)
+rr
+pp <- mean(mean_dist_alt >= rr)
+pp
+```
+
+### Part (b) (1 pt)
+
+Repeat this process using $\hat \theta$ (the MLE statistic). Which statistic has greater power?
+
+### Answer(b)
+```{r}
+mean_dist_null <- map_dbl(null_samples, function(x){max(x)})
+mean_dist_alt <- map_dbl(alt_samples, function(x){max(x)})
+df <- data.frame(null = mean_dist_null, 
+                 alt = mean_dist_alt) %>% gather %>% mutate(key = factor(key))
+ggplot(df, aes(x = value, fill = key)) + geom_density(alpha = 0.75)
+rr <- quantile(mean_dist_null, 0.95)
+pp <- mean(mean_dist_alt >= rr)
+pp
+```
+
+We can see that the MLE has greater power.
+
+### Part (c) (1 pt)
+
+Create a power curve for each method evaluated at the following alternative distributions. Save some time, feel free to only use 1000 samples (of 56 observations each) per alternative hypothesis.
+
+```{r}
+theta_power <- 51:80
+```
+
+How large does $\theta$ have to be to achieve $>80$% power for each of the methods?
+
+### Answer(c)
+```{r}
+
+power_n_mean <- map_dbl(theta_power, function(x) {
+  null_samples <- rerun(1000, { runif(56, min = 0, max = 50)})
+  alt_samples <- rerun(1000, { runif(56, min = 0, max = x)})
+  mean_dist_null <- map_dbl(null_samples, function(y){2*mean(y)})
+  mean_dist_alt <- map_dbl(alt_samples, function(y){2*mean(y)})
+  rr <- quantile(mean_dist_null, 0.95)
+  mean(mean_dist_alt >= rr)
+})
+
+temp = 0
+for(i in power_n_mean){
+  if(i > 0.8){
+    temp <- temp + 1
+  }
+}
+num_mean <- 80-temp+1
+
+df2 <- data.frame(theta = theta_power, power = power_n_mean)
+ggplot(df2, aes(x = theta, y = power)) + geom_point(size = 2) + geom_line()
+
+power_n_max <- map_dbl(theta_power, function(x) {
+  null_samples <- rerun(1000, { runif(56, min = 0, max = 50)})
+  alt_samples <- rerun(1000, { runif(56, min = 0, max = x)})
+  mean_dist_null <- map_dbl(null_samples, function(y){max(y)})
+  mean_dist_alt <- map_dbl(alt_samples, function(y){max(y)})
+  rr <- quantile(mean_dist_null, 0.95)
+  mean(mean_dist_alt >= rr)
+})
+
+temp = 0
+for(i in power_n_max){
+  if(i > 0.8){
+    temp <- temp + 1
+  }
+}
+num_max <- 80-temp+1
+
+df3 <- data.frame(theta = theta_power, power = power_n_max)
+ggplot(df3, aes(x = theta, y = power)) + geom_point(size = 2) + geom_line()
+
+num_mean
+num_max
+```
+
+We can see that for the method of moments, $\theta \geq 61$ can ensure the power is greater than 80%, and for maximum likehood, it only needs $\theta \geq 52$.
+
+### Part (d) (1 pt)
+```{r echo = FALSE}
+fish <- structure(list(Obs = 1:159, Species = c(1L, 1L, 1L, 1L, 1L, 1L, 
+1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 
+1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 1L, 2L, 2L, 2L, 
+2L, 2L, 2L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 
+3L, 3L, 3L, 3L, 3L, 3L, 3L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 4L, 
+4L, 4L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 5L, 
+6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 6L, 
+6L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 
+7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 
+7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 
+7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L, 7L), Weight = c(242, 290, 340, 
+363, 430, 450, 500, 390, 450, 500, 475, 500, 500, NA, 600, 600, 
+700, 700, 610, 650, 575, 685, 620, 680, 700, 725, 720, 714, 850, 
+1000, 920, 955, 925, 975, 950, 270, 270, 306, 540, 800, 1000, 
+40, 69, 78, 87, 120, 0, 110, 120, 150, 145, 160, 140, 160, 169, 
+161, 200, 180, 290, 272, 390, 55, 60, 90, 120, 150, 140, 170, 
+145, 200, 273, 300, 6.7, 7.5, 7, 9.7, 9.8, 8.7, 10, 9.9, 9.8, 
+12.2, 13.4, 12.2, 19.7, 19.9, 200, 300, 300, 300, 430, 345, 456, 
+510, 540, 500, 567, 770, 950, 1250, 1600, 1550, 1650, 5.9, 32, 
+40, 51.5, 70, 100, 78, 80, 85, 85, 110, 115, 125, 130, 120, 120, 
+130, 135, 110, 130, 150, 145, 150, 170, 225, 145, 188, 180, 197, 
+218, 300, 260, 265, 250, 250, 300, 320, 514, 556, 840, 685, 700, 
+700, 690, 900, 650, 820, 850, 900, 1015, 820, 1100, 1000, 1100, 
+1000, 1000), Length1 = c(23.2, 24, 23.9, 26.3, 26.5, 26.8, 26.8, 
+27.6, 27.6, 28.5, 28.4, 28.7, 29.1, 29.5, 29.4, 29.4, 30.4, 30.4, 
+30.9, 31, 31.3, 31.4, 31.5, 31.8, 31.9, 31.8, 32, 32.7, 32.8, 
+33.5, 35, 35, 36.2, 37.4, 38, 23.6, 24.1, 25.6, 28.5, 33.7, 37.3, 
+12.9, 16.5, 17.5, 18.2, 18.6, 19, 19.1, 19.4, 20.4, 20.5, 20.5, 
+21, 21.1, 22, 22, 22.1, 23.6, 24, 25, 29.5, 13.5, 14.3, 16.3, 
+17.5, 18.4, 19, 19, 19.8, 21.2, 23, 24, 9.3, 10, 10.1, 10.4, 
+10.7, 10.8, 11.3, 11.3, 11.4, 11.5, 11.7, 12.1, 13.2, 13.8, 30, 
+31.7, 32.7, 34.8, 35.5, 36, 40, 40, 40.1, 42, 43.2, 44.8, 48.3, 
+52, 56, 56, 59, 7.5, 12.5, 13.8, 15, 15.7, 16.2, 16.8, 17.2, 
+17.8, 18.2, 19, 19, 19, 19.3, 20, 20, 20, 20, 20, 20.5, 20.5, 
+20.7, 21, 21.5, 22, 22, 22.6, 23, 23.5, 25, 25.2, 25.4, 25.4, 
+25.4, 25.9, 26.9, 27.8, 30.5, 32, 32.5, 34, 34, 34.5, 34.6, 36.5, 
+36.5, 36.6, 36.9, 37, 37, 37.1, 39, 39.8, 40.1, 40.2, 41.1), 
+    Lenght2 = c(25.4, 26.3, 26.5, 29, 29, 29.7, 29.7, 30, 30, 
+    30.7, 31, 31, 31.5, 32, 32, 32, 33, 33, 33.5, 33.5, 34, 34, 
+    34.5, 35, 35, 35, 35, 36, 36, 37, 38.5, 38.5, 39.5, 41, 41, 
+    26, 26.5, 28, 31, 36.4, 40, 14.1, 18.2, 18.8, 19.8, 20, 20.5, 
+    20.8, 21, 22, 22, 22.5, 22.5, 22.5, 24, 23.4, 23.5, 25.2, 
+    26, 27, 31.7, 14.7, 15.5, 17.7, 19, 20, 20.7, 20.7, 21.5, 
+    23, 25, 26, 9.8, 10.5, 10.6, 11, 11.2, 11.3, 11.8, 11.8, 
+    12, 12.2, 12.4, 13, 14.3, 15, 32.3, 34, 35, 37.3, 38, 38.5, 
+    42.5, 42.5, 43, 45, 46, 48, 51.7, 56, 60, 60, 63.4, 8.4, 
+    13.7, 15, 16.2, 17.4, 18, 18.7, 19, 19.6, 20, 21, 21, 21, 
+    21.3, 22, 22, 22, 22, 22, 22.5, 22.5, 22.7, 23, 23.5, 24, 
+    24, 24.6, 25, 25.6, 26.5, 27.3, 27.5, 27.5, 27.5, 28, 28.7, 
+    30, 32.8, 34.5, 35, 36.5, 36, 37, 37, 39, 39, 39, 40, 40, 
+    40, 40, 42, 43, 43, 43.5, 44), Lenght3 = c(30, 31.2, 31.1, 
+    33.5, 34, 34.7, 34.5, 35, 35.1, 36.2, 36.2, 36.2, 36.4, 37.3, 
+    37.2, 37.2, 38.3, 38.5, 38.6, 38.7, 39.5, 39.2, 39.7, 40.6, 
+    40.5, 40.9, 40.6, 41.5, 41.6, 42.6, 44.1, 44, 45.3, 45.9, 
+    46.5, 28.7, 29.3, 30.8, 34, 39.6, 43.5, 16.2, 20.3, 21.2, 
+    22.2, 22.2, 22.8, 23.1, 23.7, 24.7, 24.3, 25.3, 25, 25, 27.2, 
+    26.7, 26.8, 27.9, 29.2, 30.6, 35, 16.5, 17.4, 19.8, 21.3, 
+    22.4, 23.2, 23.2, 24.1, 25.8, 28, 29, 10.8, 11.6, 11.6, 12, 
+    12.4, 12.6, 13.1, 13.1, 13.2, 13.4, 13.5, 13.8, 15.2, 16.2, 
+    34.8, 37.8, 38.8, 39.8, 40.5, 41, 45.5, 45.5, 45.8, 48, 48.7, 
+    51.2, 55.1, 59.7, 64, 64, 68, 8.8, 14.7, 16, 17.2, 18.5, 
+    19.2, 19.4, 20.2, 20.8, 21, 22.5, 22.5, 22.5, 22.8, 23.5, 
+    23.5, 23.5, 23.5, 23.5, 24, 24, 24.2, 24.5, 25, 25.5, 25.5, 
+    26.2, 26.5, 27, 28, 28.7, 28.9, 28.9, 28.9, 29.4, 30.1, 31.6, 
+    34, 36.5, 37.3, 39, 38.3, 39.4, 39.3, 41.4, 41.4, 41.3, 42.3, 
+    42.5, 42.4, 42.5, 44.6, 45.2, 45.5, 46, 46.6), Heightpct = c(38.4, 
+    40, 39.8, 38, 36.6, 39.2, 41.1, 36.2, 39.9, 39.3, 39.4, 39.7, 
+    37.8, 37.3, 40.2, 41.5, 38.8, 38.8, 40.5, 37.4, 38.3, 40.8, 
+    39.1, 38.1, 40.1, 40, 40.3, 39.8, 40.6, 44.5, 40.9, 41.1, 
+    41.4, 40.6, 37.9, 29.2, 27.8, 28.5, 31.6, 29.7, 28.4, 25.6, 
+    26.1, 26.3, 25.3, 28, 28.4, 26.7, 25.8, 23.5, 27.3, 27.8, 
+    26.2, 25.6, 27.7, 25.9, 27.6, 25.4, 30.4, 28, 27.1, 41.5, 
+    37.8, 37.4, 39.4, 39.7, 36.8, 40.5, 40.4, 40.1, 39.6, 39.2, 
+    16.1, 17, 14.9, 18.3, 16.8, 15.7, 16.9, 16.9, 16.7, 15.6, 
+    18, 16.5, 18.9, 18.1, 16, 15.1, 15.3, 15.8, 18, 15.6, 16, 
+    15, 17, 14.5, 16, 15, 16.2, 17.9, 15, 15, 15.9, 24, 24, 23.9, 
+    26.7, 24.8, 27.2, 26.8, 27.9, 24.7, 24.2, 25.3, 26.3, 25.3, 
+    28, 26, 24, 26, 25, 23.5, 24.4, 28.3, 24.6, 21.3, 25.1, 28.6, 
+    25, 25.7, 24.3, 24.3, 25.6, 29, 24.8, 24.4, 25.2, 26.6, 25.2, 
+    24.1, 29.5, 28.1, 30.8, 27.9, 27.7, 27.5, 26.9, 26.9, 26.9, 
+    30.1, 28.2, 27.6, 29.2, 26.2, 28.7, 26.4, 27.5, 27.4, 26.8
+    ), ` Widthpct` = c(13.4, 13.8, 15.1, 13.3, 15.1, 14.2, 15.3, 
+    13.4, 13.8, 13.7, 14.1, 13.3, 12, 13.6, 13.9, 15, 13.8, 13.5, 
+    13.3, 14.8, 14.1, 13.7, 13.3, 15.1, 13.8, 14.8, 15, 14.1, 
+    14.9, 15.5, 14.3, 14.3, 14.9, 14.7, 13.7, 14.8, 14.5, 15.2, 
+    19.3, 16.6, 15, 14, 13.9, 13.7, 14.3, 16.1, 14.7, 14.7, 13.9, 
+    15.2, 14.6, 15.1, 13.3, 15.2, 14.1, 13.6, 15.4, 14, 15.4, 
+    15.6, 15.3, 14.1, 13.3, 13.5, 13.7, 14.7, 14.2, 14.7, 13.1, 
+    14.2, 14.8, 14.6, 9.7, 10, 9.9, 11.5, 10.3, 10.2, 9.8, 8.9, 
+    8.7, 10.4, 9.4, 9.1, 13.6, 11.6, 9.7, 11, 11.3, 10.1, 11.3, 
+    9.7, 9.5, 9.8, 11.2, 10.2, 10, 10.5, 11.2, 11.7, 9.6, 9.6, 
+    11, 16, 13.6, 15.2, 15.3, 15.9, 17.3, 16.1, 15.1, 14.6, 13.2, 
+    15.8, 14.7, 16.3, 15.5, 14.5, 15, 15, 15, 17, 15.1, 15.1, 
+    15, 14.8, 14.9, 14.6, 15, 15.9, 13.9, 15.7, 14.8, 17.9, 15, 
+    15, 15.8, 14.3, 15.4, 15.1, 17.7, 17.5, 20.9, 17.6, 17.6, 
+    15.9, 16.2, 18.1, 14.5, 17.8, 16.8, 17, 17.6, 15.6, 15.4, 
+    16.1, 16.3, 17.7, 16.3), Sex = c(NA, NA, NA, NA, NA, NA, 
+    NA, NA, NA, NA, NA, NA, NA, 1L, 1L, NA, 1L, NA, NA, NA, 1L, 
+    NA, NA, NA, NA, 1L, NA, NA, NA, 0L, 0L, NA, 1L, 0L, NA, NA, 
+    NA, NA, NA, 0L, NA, NA, NA, NA, NA, NA, NA, 0L, 0L, 0L, 0L, 
+    0L, NA, 0L, NA, NA, 0L, NA, NA, 0L, NA, NA, 1L, 1L, 1L, NA, 
+    NA, 0L, 0L, NA, 0L, 0L, 1L, 0L, 1L, 0L, 1L, 1L, 1L, 0L, 0L, 
+    0L, 0L, 0L, 0L, 0L, NA, 0L, NA, NA, NA, 1L, NA, NA, NA, NA, 
+    0L, 0L, NA, NA, NA, 0L, 0L, NA, NA, NA, NA, NA, NA, NA, NA, 
+    NA, NA, NA, NA, 1L, 0L, 0L, NA, NA, NA, 0L, 0L, 0L, NA, NA, 
+    NA, NA, NA, NA, 0L, NA, NA, 0L, 0L, NA, 0L, NA, 0L, 0L, NA, 
+    NA, 0L, 0L, 0L, 0L, 0L, 0L, NA, NA, 0L, 0L, 0L, 0L, 0L, 0L, 
+    0L, 1L, 0L)), class = "data.frame", row.names = c(NA, -159L
+)) 
+```
+
+This file includes a sample of fish caught by the University of Helsinki, including their lengths. Using the `length1` measurement and a test statistic of your choice, test the hypothesis that Perch (species code 7) are uniformly distributed between 0 and 50cm against the alternative that they are uniform between 0 and 51cm. 
+
+```{r}
+summary(fish)
+```
+
+### Answer(d)
+```{r}
+length1 <- c()
+for(i in 1:length(fish[["Species"]])){
+  if(fish[["Species"]][i] == 7){
+    length1 <- c(length1, fish[["Length1"]][i])
+  }
+}
+length(length1)
+```
+It is obvious that the size of the fish of species 7 is also 56, and to judge if the data satisfies the uniform distribution, we just need to calculate the two times mean of `length1` and compare it to the result in (b).
+
+```{r}
+2*mean(length1) < 56.29058
+```
+We find that the value is smaller than the 0.95 quantile, thus we cannot reject the null hypothesis. So they are uniformly distributed between 0 and 50cm.
+
+
+## Problem 3 (3 pt)
+
+### Part (a) (1 pt)
+
+The Laplace distribution (also known as the "double exponential distribution") is given by:
+
+$$f(x) = \frac{1}{2} \exp\left\{ -\left| x - \theta \right| \right\}, x \in (-\infty, \infty)$$
+
+Prove that the median of the distribution is $\theta$ (i.e., $P(X \le \theta) = 0.5$ or equivalently, $\int_{-\infty}^\theta f(x) \, dx = 0.5$).
+
+**Hint:** What is $- |x - \theta|$ if $x \le \theta$?
+
+We will then use (without proof), that for a symmetric distribution like the Laplace, the **mean is equal to the median.**
+
+### Answer(a)
+When $x \le \theta$, $-|x-\theta|=x-\theta$, so we just need to calculate:
+$$
+\int_{-\infty}^\theta \frac{1}{2}e^{x-\theta}\, dx = \frac{1}{2}e^{x-\theta}
+|_{-\infty}^\theta = 0.5
+$$
+So it is proved that the median of Laplace distribution is $\theta$.
+
+### Part (b) (2 pt)
+
+We can be generate samples of size $n$ using the following function:
+
+```{r}
+rlaplace <- function(n, theta) {
+  s <- 2 * rbinom(n, size = 1, p = 0.5) - 1
+  m <- rexp(n) 
+  s * m + theta
+}
+```
+
+Compare the sample mean and the sample median as estimates of $\theta$, for a sample of size 20. Use 1000 replications. Report point estimates of bias, variance, and mean squared error. Include a 99.9% confidence interval for mean squared error estimates. Which estimator would you prefer and why?
+
+### Answer(b)
+I choose $\theta$ to be 10.
+
+```{r}
+n <- 20
+true_theta <- 10
+samples <- rerun(1000, { rlaplace(n, true_theta)})
+
+median_sample_dist <- map_dbl(samples, median)
+mean_sample_dist <- map_dbl(samples, mean)
+
+df <- data.frame(median = median_sample_dist, 
+                 mean = mean_sample_dist) %>% gather %>% mutate(key = factor(key))
+ggplot(df, aes(x = value, fill = key)) + geom_density(alpha = 0.75)
+```
+
+The bias is computed below:
+```{r}
+bias_median <-mean(median_sample_dist) - true_theta
+bias_mean <- mean(mean_sample_dist) - true_theta
+bias_median
+bias_mean
+```
+We can find that the two biases are quite close, and the one for median is smaller.
+
+The variance is computed below:
+```{r}
+var_median <- var(median_sample_dist)
+var_mean <- var(mean_sample_dist)
+var_median
+var_mean
+
+```
+
+We first calculate $bias^2$
+```{r}
+mean((median_sample_dist - true_theta)^2)
+mean((mean_sample_dist - true_theta)^2)
+```
+As these two values are not unbiased, we need to calculate $MSE = Var - Bias^2$
+```{r}
+MSE_median <- var_median - mean((median_sample_dist - true_theta)^2)
+MSE_mean <- var_mean - mean((mean_sample_dist - true_theta)^2)
+MSE_median
+MSE_mean
+```
+
+```{r}
+t.test((median_sample_dist - true_theta)^2, conf.level = 0.999)$conf.int
+t.test((mean_sample_dist - true_theta)^2, conf.level = 0.999)$conf.int
+```
+
+As the MSE for median samples are less biased, we prefer the median estimator.

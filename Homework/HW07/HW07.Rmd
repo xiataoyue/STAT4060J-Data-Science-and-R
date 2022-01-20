@@ -1,0 +1,245 @@
+---
+title: "Homework 7"
+author: "Taoyue Xia"
+date: "Due 2021-07-06 at 11:59pm"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(7792100)
+library(tidyverse)
+```
+
+## Question 1 (5 pts)
+
+Let's compare the Wilcoxon-Mann-Whitney (WMW) test to  standard $t$-test. Throughout, feel free to use R's built in `wilcox.test` and `t.test` functions. 
+
+We will fix $n = m = 20$ throughout and vary the distributions of $X$ and $Y$ to see which test is more powerful and when.
+
+We will test the hypothesis $H_0: F = G$ vs. $H_1: F \ne G$. We will use $\alpha = 0.05$ for both testing Type I error and estimating power. Use at least 1000 Monte Carlo replications for each of the questions.
+
+### Part (a) (1 pt)
+
+Use a Monte Carlo approach to asses the Type I error for both tests when $F = G = N(0, 2)$. Use `binom.test` to provide a 99% CI for the estimated Type I error when $\alpha = 0.05$.
+
+### Answer (a)
+```{r}
+sample_F <- rerun(1000, rnorm(20, 0, sqrt(2)))
+sample_G <- rerun(1000, rnorm(20, 0, sqrt(2)))
+
+diff_t <- c()
+diff_w <- c()
+for(i in 1:1000) {
+  temp <- t.test(x = sample_F[[i]], y = sample_G[[i]], conf.level = 0.95)$p.value
+  diff_t <- c(diff_t, temp)
+  temp <- wilcox.test(x = sample_F[[i]], y = sample_G[[i]], conf.level = 0.95)$p.value
+  diff_w <- c(diff_w, temp)
+}
+
+covers_t <- map_dbl(diff_t, ~ .x < 0.05)
+covers_w <- map_dbl(diff_w, ~ .x < 0.05)
+
+binom.test(sum(covers_t), length(covers_t), conf.level = 0.99)$conf.int
+binom.test(sum(covers_w), length(covers_w), conf.level = 0.99)$conf.int
+
+```
+We see that for both test, the confidence interval is quite small, really close to 0, indicating that the p.value is higher than 0.05, which means that we have little confidence to reject the null hypothesis that $F = G$.
+
+
+### Part (b) (1 pt)
+
+Find the power of the WMW and the $t$-test when $F = N(0, 2)$ and $G = N(1, 2)$. Use `binom.test` to provide a 99% CI when $\alpha = 0.05$
+
+### Answer (c)
+```{r}
+Fsample <- rerun(1000, rnorm(20, 0, sqrt(2)))
+Gsample <- rerun(1000, rnorm(20, 1, sqrt(2)))
+
+diff_t <- c()
+diff_w <- c()
+for(i in 1:1000) {
+  temp <- t.test(x = Fsample[[i]], y = Gsample[[i]], conf.level = 0.95)$p.value
+  diff_t <- c(diff_t, temp)
+  temp <- wilcox.test(x = Fsample[[i]], y = Gsample[[i]], conf.level = 0.95)$p.value
+  diff_w <- c(diff_w, temp)
+}
+
+covers_t <- map_dbl(diff_t, ~ .x < 0.05)
+covers_w <- map_dbl(diff_w, ~ .x < 0.05)
+binom.test(sum(covers_t), length(covers_t), conf.level = 0.99)$conf.int
+binom.test(sum(covers_w), length(covers_w), conf.level = 0.99)$conf.int
+
+```
+We see that for both test, the confidence interval is higher than 0.5, indicating that the p.value is most times less than 0.05, which means that we have great confidence to reject the null hypothesis that $F = G$. The power given by wilcoxon.test is a little smaller than that of t.test.
+
+### Part (c) (1 pt)
+
+Use a Monte Carlo approach to asses the Type I error for both tests when $F = G = t(4)$ (a $t$-distribution with 4 degrees of freedom).  Use `binom.test` to provide a 99% CI for the estimated Type I error when $\alpha = 0.05$.
+
+### Answer (c)
+```{r}
+Fsample <- rerun(1000, rt(20, 4))
+Gsample <- rerun(1000, rt(20, 4))
+
+diff_t <- c()
+diff_w <- c()
+for(i in 1:1000) {
+  temp <- t.test(x = Fsample[[i]], y = Gsample[[i]], conf.level = 0.95)$p.value
+  diff_t <- c(diff_t, temp)
+  temp <- wilcox.test(x = Fsample[[i]], y = Gsample[[i]], conf.level = 0.95)$p.value
+  diff_w <- c(diff_w, temp)
+}
+
+covers_t <- map_dbl(diff_t, ~ .x < 0.05)
+covers_w <- map_dbl(diff_w, ~ .x < 0.05)
+binom.test(sum(covers_t), length(covers_t), conf.level = 0.99)$conf.int
+binom.test(sum(covers_w), length(covers_w), conf.level = 0.99)$conf.int
+
+```
+We see that for both test, the confidence interval is quite small, really close to 0, indicating that the p.value is higher than 0.05, which means that we have little confidence to reject the null hypothesis that $F = G$. The power given by the two tests are almost the same.
+
+### Part (d) (1 pt)
+
+Find the power of the WMW and the $t$-test when $F = t(4)$ and $G = t(4) + 1$. Use `binom.test` to provide a 99% CI when $\alpha = 0.05$
+
+### Answer (d)
+```{r}
+Fsample <- rerun(1000, rt(20, 4))
+Gsample <- rerun(1000, rt(20, 4, 1))
+
+diff_t <- c()
+diff_w <- c()
+for(i in 1:1000) {
+  temp <- t.test(x = Fsample[[i]], y = Gsample[[i]], conf.level = 0.95)$p.value
+  diff_t <- c(diff_t, temp)
+  temp <- wilcox.test(x = Fsample[[i]], y = Gsample[[i]], conf.level = 0.95)$p.value
+  diff_w <- c(diff_w, temp)
+}
+
+covers_t <- map_dbl(diff_t, ~ .x < 0.05)
+covers_w <- map_dbl(diff_w, ~ .x < 0.05)
+binom.test(sum(covers_t), length(covers_t), conf.level = 0.99)$conf.int
+binom.test(sum(covers_w), length(covers_w), conf.level = 0.99)$conf.int
+
+```
+We see that for both test, the confidence interval is about 0.7-0.8, which is quite close to 1, indicating that the p.value is most times less than 0.05, which means that we have great confidence to reject the null hypothesis that $F = G$. The power given by wilcoxon.test is a little higher than that of t.test.
+
+### Part (e) (1 pt)
+
+Comment on the results from (a) - (d). If you wanted to perform a two sample test but weren't 100% sure of the distribution, which test would you reach for? Comment on the assumptions and trade-offs of the methods.
+
+### Answer (e)
+WMW is used when two independent samples are given and nothing is assumed about their distribution. T-test is based on the assumption that the sample follows normal distribution.
+
+For distribution free tests, I will reach for the wilcoxon test, because it will give a greater power of whether to reject the null hypothesis whether the two samples' distribution are the same or not. If a distribution is determined and follows a normal-like distribution, then t.test can be used for higher power.
+
+## Question 2 (3 points)
+
+Let's return to the cancer biopsy data from last week's homework.
+
+```{r echo = FALSE}
+cancer <- read.csv("cancer_cell_biopsy.csv", header = FALSE)
+col_base <- c("radius",
+              "texture",
+              "perimeter",
+              "area",
+              "smoothness",
+              "compactness",
+              "concavity",
+              "concave_points",
+              "symmetry",
+              "fractal_dimension")
+
+cols <- c(paste0(col_base, "_mean"), paste0(col_base, "_sd"), paste0(col_base, "_worst"))
+
+colnames(cancer) <- c("ID", "Diagnosis", cols)
+```
+
+Suppose that we interested in using the radius of the cells in the biopsy to help us predict the fractal dimension (a measure of how "wiggly" the border is). This could be useful if fractal dimension provides useful diagnostic information, but is more costly to measure than radius. Predicting the fractal dimension from the radius could then be a particularly useful technique.
+
+In the following, let $X_i$ be `radius_mean` for each subject and let $Y_i$ be `fractal_dimension_mean` for each subject As we did with the bootstrap homework problems, suppose we assume that
+$$Y_i = \beta_0 + \beta_1 X_i + R_i$$
+$R_i$ is an unobserved, latent variable. We will assume that it is **independent of $X_i$**. 
+
+Note that $Y_i$ and $X_i$ are **independent** if and only if $\beta_1 = 0$.
+
+### Part (a) (1 pt)
+
+In class, we saw a permutation test that used the **correlation** between between $Y$ and $X$ to test the null hypothesis that $X$ and $Y$ were independent.
+
+Propose a **distribution free** version of of the correlation test and implement it to test the hypothesis that $\beta_1 = 0$ at the $\alpha = 0.05$ level. You may either find a 5% rejection region or compute the p-value and interpret the result. (Hint: Recall that we found a distribution free method (the Wilcoxon-Mann-Whitney test) by taking the ranks of the data and then performing a difference of means permutation test.)
+
+### Answer (a)
+```{r}
+radius_rank <- rank(cancer$radius_mean)
+fractual_rank <- rank(cancer$fractal_dimension_mean)
+observed_cor <- cor(radius_rank, fractual_rank)
+cors <- replicate(1000, {
+  shuffled_fractual <- sample(fractual_rank)
+  cor(radius_rank, shuffled_fractual)
+})
+quantile(cors, c(0.025, 0.975))
+2 * min(mean(cors >= observed_cor), mean(cors <= observed_cor))
+
+X <- cancer$radius_mean
+Y <- cancer$fractal_dimension_mean
+wilcox.test(x = X, y = Y, conf.level = 0.95)$p.value
+```
+As the p-value generated by the wilcoxon test is far less than 0.05, it means that we are of great confidence about the fact that$X$ and $Y$ follows a different distribution, so we should accept the null hypothesis that $\beta_1 = 0$ at the $\alpha = 0.05$ level.
+Also, the correlation test shows that the 95% confidence interval shows that we cannot reject the null hypothesis too.
+
+### Part (b) (2 pts)
+
+If $\beta_1 \ne 0$, then lets try to find a confidence interval for it. Propose an adjustment function $h$ such that:
+$$Y_i' = h(Y_i, X_i, \beta_1)$$
+makes $Y_i'$ independent of $X_i$. 
+
+Propose such an adjustment and use the test from part (a) to construct a 95\% confidence interval for $\beta_1$. **Important**: One advantage of a distribution free method is that the distribution of the test statistic does not depend on the parameter $\beta_1$ (making it much more computationally efficient in many cases). Your method should compute the distribution for the test statistic **once** and then test each hypothesized $\beta_1$ value using that distribution.
+
+Here is a range of $\beta_1$ values to test. While these may look small in magnitude, they reflect the fact that `radius_mean` and `fractal_dimension_mean` are on very different scales. 
+```{r}
+betas <- seq(-0.001, 0.001, length.out = 1000) 
+```
+
+### Answer (b)
+```{r}
+q <- c()
+p.value <- c()
+for(beta in betas){
+  radius <- map_dbl(cancer$radius_mean, ~ .x * beta)
+  fractual <- cancer$fractal_dimension_mean
+  h <- fractual - radius
+  h_rank <- rank(h)
+  radius_rank <- rank(cancer$radius_mean)
+  observed_cor <- cor(radius_rank, h_rank)
+  cors <- replicate(1000, {
+    shuffled_radius <- sample(radius_rank)
+    cor(h_rank, shuffled_radius)
+  })
+  q <- c(q, quantile(cors, c(0.025, 0.975)))
+  p.value <- c(p.value, 2 * min(mean(cors >= observed_cor), mean(cors <= observed_cor)))
+}
+
+covers <- c()
+for(i in 1:1000){
+  if(q[2*i-1] <= betas[i] && q[2*i] >= betas[i]){
+    covers <- c(covers, 1)
+  }
+  else {
+    covers <- c(covers, 0)
+  }
+}
+binom.test(sum(p.value < 0.05), 1000, conf.level = 0.95)$conf.int
+binom.test(sum(covers), length(covers), conf.level = 0.95)$conf.int
+
+```
+With using the binom.test, we can see that we are 99%-100% sure that $\beta_1$'s 95% confidence interval always contains 0, and the p.value we get is at most times greater than 0.05, thus we are of great confidence that when $\beta_1$ is quite close to 0, the two samples are independent, so we should reject the null hypothesis that $\beta_1 \neq 0$ as $\beta \sim 0$.
+
+## Question 3 (2 pts)
+
+In the paper "Serial dependence in visual perception," read the introduction, the first results section ("Serial dependence in orientation perception"), Fig 2, and the Experiment 1 section of the "Online Methods" supplement (p. 7). Carefully read the *Analysis* section of Experiment 1 portion of Online Methods and understand the statistical tests used in making the claim that serial autocorrelation is present in visual processing. Write a paragraph explaining the main question of the research, briefly summarizing the experiment described in the "Serial dependence in orientation perception", and explain the use of permutation tests in the analysis of Experiment 1. Pay careful attention to (a) what variables were permuted and (b) what was the test statistic used. 
+
+### Anwser
+> This research mainly focuses on human's perceptive adaptivity to changeable environment. 12 subjects are researched, including 6 males and 6 females. In the experiment, all subjects are shown several series of Gabors of different orientations. After each trial, a report from each subject is collected to show the error between perceptive orientation change and real change. In the data processing part, subjects' attraction and relative orientation are permuted, and this permutation procedure generated a null distribution against which the measured amplitude of serial dependence was compared to obtain a P value. P values were taken as the proportion of amplitude estimates in the bootstrapped null distribution that were equal to or larger in absolute value than the subject’s measured amplitude of serial dependence.
+Statistical tests are two-tailed and Bonferroni-corrected for multiple comparisons, bootstrapping the DoG curve, and resampling the error plot.

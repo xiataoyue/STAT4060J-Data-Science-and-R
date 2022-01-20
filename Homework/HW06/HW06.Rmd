@@ -1,0 +1,324 @@
+---
+title: "HW06"
+date: "Due 2021-06-29 at 11:59pm"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(320930033)
+library(tidyverse)
+```
+
+When working on your assignment, make sure that `cancer_cell_biopsy.csv` is in the same directory as this file and set the working directory to the file's location (in the Session menu.) 
+
+## Question 1 (5 pts)
+
+The following data come from [a study of breast cancer biopsies](http://mlr.cs.umass.edu/ml/datasets/Breast+Cancer+Wisconsin+%28Diagnostic%29). 
+```{r}
+cancer <- read.csv("cancer_cell_biopsy.csv", header = FALSE)
+col_base <- c("radius",
+              "texture",
+              "perimeter",
+              "area",
+              "smoothness",
+              "compactness",
+              "concavity",
+              "concave_points",
+              "symmetry",
+              "fractal_dimension")
+
+cols <- c(paste0(col_base, "_mean"), paste0(col_base, "_sd"), paste0(col_base, "_worst"))
+
+colnames(cancer) <- c("ID", "Diagnosis", cols)
+
+## The current diagnosis is either "B" or "M". We'll turn this into a logical/boolean so it is a little easier to work with in R.
+cancer <- mutate(cancer, benign = Diagnosis == "B")
+```
+
+### Part (a) (2 pts)
+
+Let's begin our investigation by investigating whether benign (not harmful) and malignant (harmful) tumors differ in size (radius). We can see that benign tumors tend to be smaller than malignant tumors:
+
+```{r}
+ggplot(cancer, aes(x = radius_mean, color = benign, fill = benign)) + geom_density(alpha = 0.5)
+```
+
+Use a stratified bootstrap to generate a 95% confidence interval for the difference of means for the benign and malignant radius measurements. Interpret what this confidence interval tells us about the distributions of benign and malignant tumors? Particularly, does this interval include zero? What would including zero indicate?
+
+### Answer (a)
+```{r}
+library(boot)
+mean_diff <- function(x, index){
+  xstar <- x[index, ]
+  mean(xstar$radius_mean[xstar$benign], na.rm = TRUE) - mean(xstar$radius_mean[!xstar$benign], na.rm = TRUE)
+}
+
+cancer.boot <- boot(cancer, statistic = mean_diff, strata = cancer$benign, R = 1000)
+cancer.ci <- boot.ci(cancer.boot, type = "basic")
+cancer.ci
+```
+From the 95% confidence interval, we can conclude that benign tumors are likely to be smaller than malignant ones. The interval does not include zero, indicating that benign tumors don't share the same average size with malignant ones. If zero is included, it is possible that the two kinds of tumors share the same average size.
+
+
+### Part (b) (1 pt)
+
+Suppose you were going to classify new tumors as either benign or malignant based on the radius of biopsy. 
+
+If the radius is below some value, $c$, you classify it as benign
+```{r}
+is_benign <- function(radius, cutoff)  {
+  radius < cutoff 
+}
+```
+
+Suppose we pay a cost of 1 if we misclassify a benign tumor as malignant, but pay a cost of 3 if we misclassify a malignant tumor as benign. Complete the following function that will compute the **average loss for the entire sample** for a given cutoff value.
+```{r}
+candidate_cutoffs <- seq(10, 20, length.out = 20)
+loss <- map_dbl(candidate_cutoffs, function(cut) {
+  classifications <- is_benign(cancer$radius_mean, cut)
+  ## COMPUTE THE LOSS HERE
+  count <- length(cancer$radius_mean)
+  loss_point <- 0
+  for(i in 1:count){
+    if(cancer$benign[i] == TRUE && classifications[i] == FALSE) loss_point <- loss_point + 1
+    if(cancer$benign[i] == FALSE && classifications[i] == TRUE) loss_point <- loss_point + 3
+  }
+  return(loss_point / count)
+})
+plot(candidate_cutoffs, loss, type = 'l') # Optional: plot the losses
+best_cut <- candidate_cutoffs[which.min(loss)]
+best_cut
+min(loss)
+```
+
+Report the cutoff value and average loss value. Do you think this value would be good a estimate of the average loss you would pay on a new sample? Why or why not?
+
+### Answer (b)
+The cutoff value is 13.68 and the corresponding average loss value is 0.2408. 
+
+I think this value is a good estimate of the average loss because we get the smallest average loss.
+
+
+### Part (c) (2 pts)
+
+Instead of using the entire sample to estimate out of sample prediction error, we will implement cross validation to estimate out of sample error when we pick a cutoff value in the style of part (b). Your CV implementation should
+
+- use 500 replications
+- each replication split the data into a training and test set
+- using the training set, select a cut off value
+- using the test set, estimate average prediction error
+
+Taking the mean of the 500 average loss values, estimate the out of sample prediction error. Compare these results to part (b). 
+
+### Answer (c)
+```{r}
+k <- 500
+n <- dim(cancer)[1]
+half = round(n/2)
+
+mean_loss <- function(x, cut) {
+  classifications <- is_benign(x$radius_mean, cut)
+  ## COMPUTE THE LOSS HERE
+  count <- length(x$radius_mean)
+  loss_point <- 0
+  for(i in 1:count){
+    if(x$benign[i] == TRUE && classifications[i] == FALSE) loss_point <- loss_point + 1
+    if(x$benign[i] == FALSE && classifications[i] == TRUE) loss_point <- loss_point + 3
+  }
+  return(loss_point / count)
+}
+
+losses <- replicate(k, {
+  rand.order <- sample.int(n)
+  train.idx <- rand.order[1:half]
+  test.idx <- rand.order[(half+1):n]
+  
+  x <- cancer[train.idx, ]
+  cuts <- c()
+  for(i in 1:20){
+    cuts <- c(cuts, mean_loss(x, candidate_cutoffs[i]))
+  }
+  cut_off <- candidate_cutoffs[which.min(cuts)]
+  y <- cancer[test.idx, ]
+  mean_loss(y, cut_off)
+})
+mean(losses)
+
+err_lm <- replicate(k,{
+  rand.order <- sample.int(n)
+  train.idx <- rand.order[1:half]
+  test.idx <- rand.order[(half+1):n]
+  
+  mod <- lm(radius_mean ~ benign, cancer[train.idx, ])
+  preds <- predict(mod, newdata = cancer[test.idx, ])
+  cancer$radius_mean[test.idx] - preds
+})
+mean(err_lm)
+```
+The mean of 500 average loss values varies in [0.257, 0.26], which is close to the value 0.2407 in (b). And the corresponding prediction error varies from [0.005, 0.012], which is quite small.
+
+## Question 2 (5 pts)
+
+The Gini coefficient is a measure of "inequality" of a distribution, as expressed as the expected absolute difference between two randomly selected members of a population. Formally,
+
+$$G = \frac{1}{2\mu} \int_{-\infty}^\infty \int_{-\infty}^\infty |x - y| f(x) f(y) \, dx \, dy$$
+
+In a distribution with only one possible value $P(X = a) = 1$ for some $a$, the Gini coefficient is zero. For distributions like power law distributions with very long tails, the Gini coefficient approaches 1.
+
+### Part (a) (1 pt)
+
+Suppose $X$ is a continuous random variable (i.e., $P(X_i = X_j) = 0$ for any sample), a natural estimator of $G$ uses the **empirical mass function**  $\hat f(x) = 1/n \sum_{i=1}^n I(X_i = x)$ in place of $f$, to get
+$$\hat G = \frac{1}{2 \bar X} \sum_{i=1}^n \sum_{j = 1}^n |X_i - X_j| \frac{1}{n} \frac{1}{n} = \frac{1}{2 \bar X n^2} \sum_{i=1}^n \sum_{j = 1}^n |X_i - X_j|$$
+Write a function to compute $\hat G$. Verify your solution on the following sample,
+```{r}
+G_hat <- function(x, n){
+  sum <- 0
+  for(i in 1:n){
+    for(j in 1:n){
+      sum <- sum + abs(x[i] - x[j])
+    }
+  }
+  sum / (2 * mean(x) * n * n)
+}
+
+v <- c(1.21889696917952, 0.0794705920852721, 0.239628585986793, 1.31094594481857, 
+0.946306612446215, 0.18770645884797, 0.0990762918207918, 0.899883037391019, 
+1.11378922029854, 1.14929740592362)
+
+n <- length(v)
+G <- G_hat(v, n)
+G
+```
+
+
+### Part (b) (1 pt)
+
+Implement a jackknife variance estimator for the variance of the statistic $\hat G$:
+
+$$v = \frac{n - 1}{n} \sum_{i=1}^n (\hat G_i - \hat G)^2$$
+
+where $\hat G_i$ applies the Gini coefficient estimator to the sample with **observation $i$ removed**.
+
+You may verify the correct answer is `0.01151351`.
+
+### Answer (c)
+```{r}
+G_i  <- function(x, n, i){
+  deleted <- x[-i]
+  sum <- 0
+  
+  for(j in 1:(n-1)){
+    for(k in 1:(n-1)){
+      sum <- sum + abs(deleted[j] - deleted[k])
+    }
+  }
+  sum / (2 * mean(deleted) * (n-1)^2)
+}
+
+jack <- function(x, n){
+  sum <- 0
+  for(i in 1:n){
+    sum <- sum + (G_i(x, n, i) - G_hat(x, n))^2
+  }
+  sum * (n-1) / n
+}
+
+estimate <- jack(v, n)
+estimate
+```
+
+
+### Part (c) (2 pt)
+
+Read the paper "A Method to Calculate the Jackknife Variance Estimator for the Gini Coefficient." Implement the version of the jackknife variance estimator given in that paper using the re-expression of $\hat G_i$ given equation (9) on page 3.
+
+Verify your solution by comparing it to the answer you get in (b).
+
+#### Clarifications
+
+On the whole, I like the authors' explanation of their method, but I noticed several points that require clarification.
+
+- The authors are never quite explicit, but they assume that all the data is sorted from low to high. You can use the `sort` function to ensure this holds.
+- The authors call $r_i$ the "income rank" of the $i$th observation. After sorting your data, $r_i = i$. In R terms, `y <- sort(x) ; r <- 1:length(y)`.
+- You may find the following functions useful: `sum`, `rev` (reverses a vector), and `cumsum` (provides a cumulative sum of a vector). In particular, when computing the terms $K_i$.
+- The expression in Equation (9) requires that you have a term $K_{n + 1} = 0$. After you create your $K$ vector, you can then update it to `K <- c(K, 0)`.
+- Karagiannis and Kovacevic emphasize that their method only requires two passes the through the data; while that is interesting, you may make as may passes through the data as you wish (for example by calling `mean` or `sum`), but you should never compute all the pairwise differences. We are mostly interested in the fact that we can sort the data using approximately $n \log(n)$ operations instead of the much larger $n^3$ operations needed to compute all $n^2$ differences for each of $n$ values $\hat G_i$.
+
+### Answer (c)
+```{r}
+y <- sort(v)
+r <- 1:length(y)
+N <- length(y)
+mu <- mean(y)
+R <- sum(r * y)
+G <- 2 / (mu * N^2) * R - (N + 1) / N
+
+v_ = vector()
+G_i = vector()
+K <- vector()
+K[1] <- mu * N
+
+for(i in 1:N) {
+  mu_i <- 1 / (N - 1) * (N * mu - y[i])
+  if(i != N) K[i + 1] <- K[i] - y[i]
+  else K <- c(K, 0)
+  
+  G_i[i] <- 2 / (mu_i * (N - 1)^2) * (R - r[i] * y[i] - K[i+1]) - N / (N - 1)
+  if(i == 1) v_[i] <- (N - 1) / N * (G_i[i] - G)^2
+  else v_[i] <- (N - 1) / N * (G_i[i] - G)^2 + v_[i - 1]
+}
+
+v_[N]
+```
+It is the same value to problem (b).
+
+### Part (d) (1 pt)
+
+```{r}
+load("sf_2019_compensation.rda")
+ggplot(sf_2019_compensation, aes(x = Total.Salary)) + geom_density()
+```
+
+Here is a sample of 1000 employees from the City of San Francisco. Among other variables, we have information on the total salary disbursed in 2019. Create Studentized bootstrap 95% confidence intervals for the Gini coefficient for total salary for all employees of the City of San Francisco using the jackknife variance estimator from part (c). You may carefully follow (i.e., copy and paste) the examples from the slides. Remember to return two things in your statistic function: the value of the Gini coefficient the bootstrap sample and the estimated variance for that bootstrap sample (using the jackknife from (c)). Use 1000 bootstrap replications.
+
+Comment on the intervals. Would you exclude the hypothesis that the true Gini coefficient was 0.2?
+
+### Answer (d)
+```{r}
+JK <- function(v) {
+  y <- sort(v)
+  r <- 1:length(y)
+  N <- length(y)
+  mu <- mean(y)
+  R <- sum(r * y)
+  G <- 2 / (mu * N^2) * R - (N + 1) / N
+
+  v_ = vector()
+  G_i = vector()
+  K <- vector()
+  K[1] <- mu * N
+
+  for(i in 1:N) {
+    mu_i <- 1 / (N - 1) * (N * mu - y[i])
+    if(i != N) K[i + 1] <- K[i] - y[i]
+    else K <- c(K, 0)
+  
+    G_i[i] <- 2 / (mu_i * (N - 1)^2) * (R - r[i] * y[i] - K[i+1]) - N / (N - 1)
+    if(i == 1) v_[i] <- (N - 1) / N * (G_i[i] - G)^2
+    else v_[i] <- (N - 1) / N * (G_i[i] - G)^2 + v_[i - 1]
+  }
+
+  return(c(G, v_[N]))
+}
+
+stat <- function(x, index){
+  x_ <- x[index]
+  return(JK(x_))
+}
+
+bootstrap <- boot(sf_2019_compensation$Total.Salary, statistic = stat, R = 1000)
+boot.ci(bootstrap, type = "stud")
+```
+I will exclude the hypothesis that the true Gini coefficient was 0.2 because the 95% confidence interval didn't contain 0.2
+

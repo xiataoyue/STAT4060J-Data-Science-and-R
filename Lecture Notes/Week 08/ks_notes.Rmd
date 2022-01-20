@@ -1,0 +1,74 @@
+---
+title: "KS Tests"
+author: "Mark Fredrickson"
+date: "7/1/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+load("../../../../data/gamoran.rda")
+gamoran$PH.AZ <- gamoran$PHOENIX == "(0) Non-Phoenix"
+
+
+load("../../../../data/nhanes/nhanes.rda")
+nhanes$ratio <- nhanes$sys_mean / nhanes$dia_mean
+nhanes <- nhanes[!is.na(nhanes$taking_aspirin) & !is.na(nhanes$ratio), ]
+```
+
+## KS test
+
+Our method for performing the KS test in last lecture:
+```{r}
+ks <- function(w, z) {
+  f <- ecdf(w[z == 1])
+  g <- ecdf(w[z == 0])
+  max(abs(f(w) - g(w)))
+}
+
+perms <- replicate(1000, sample(nhanes$taking_aspirin))
+ts <- apply(perms, 2, function(zstar) { 
+    ks(nhanes$ratio, zstar) 
+})
+
+observed_ks <- ks(nhanes$ratio, nhanes$taking_aspirin)
+(ksp <- 2 * min(mean(ts >= observed_ks), mean(ts <= observed_ks)))
+```
+
+Notice that this appears to require the data `w`. But we can do the same thing using ranks,
+$$D^+ = \max_{1 \le i \le n+m} \frac{1}{n} \sum_{i=1}^{n+m} Z_i I(R_j \le i) - \frac{1}{m} \sum_{i=1}^{n+m} (1 - Z_i) I(R_j \le i)$$
+
+Suppose we have all all the $Z = 1$ ranks in `r1` and all the $Z = 0$ ranks in `r2`:
+```{r, cache = TRUE}
+d_plus <- function(r1, r2) {
+  n <- length(r1)
+  m <- length(r2)
+  diffs <- map_dbl(1:(n+m), function(i) {
+    (1/n) * sum(r1 <= i) - (1/m) * sum(r2 <= i) # could also do mean(r1 <= i) - mean(r2 <= i)
+  }) 
+  max(diffs)
+}
+
+d_minus <- function(r1, r2) {
+  d_plus(r2, r1) 
+}
+
+null_distribution <- function(n, m, k = 1000) { 
+  replicate(k, {
+    perm <- sample.int(n + m)
+    group1 <- perm[1:n]
+    group2 <- perm[-(1:n)]
+    max(d_plus(group1, group2), d_minus(group1, group2))
+  })
+}
+
+null_nhanes <- null_distribution(sum(nhanes$taking_aspirin), sum(!nhanes$taking_aspirin))
+```
+
+```{r}
+tmp1 <- data.frame(ks = ts, method = "One")
+tmp2 <- data.frame(ks = null_nhanes, method = "Two")
+ggplot(rbind(tmp1, tmp2), aes(x = ks, color = method, fill = method)) + geom_density(alpha = 0.5)
+```

@@ -1,0 +1,238 @@
+---
+title: "HW03"
+author: "Taoyue Xia"
+date: "Due Sunday, June 6 at 11:59pm"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(394932)
+library(tidyverse)
+library(ggplot2)
+```
+
+## Problem 1 (3 pts)
+
+Suppose we are sampling independent observations $X_i$ from a distribution for which we assume
+$$\text{E}(X) < \infty, \quad \text{E}(X^2) < \infty$$
+so that the Central Limit Theorem will apply. Writing $\mu = \text{E}(X)$ and $\sigma^2 = \text{E}((X - \mu)^2)$, the CLT states that for large samples the following approximation holds:
+$$\bar X \sim N(\mu, \sigma^2/n)$$
+A corollary of the CLT is that we have (approximately),
+$$\frac{\bar X - \mu}{s/\sqrt{n}} \sim t(n - 1)$$
+where $s$ is the square root of the sample variance and $t(d)$ is the $t$-distribution with $d$ degrees of freedom. As we saw in class, this gives rise to $(1 - \alpha) \times 100\%$ confidence intervals defined by the set of (two-sided) hypothesis tests that would not be rejected at the $\alpha$ level:
+$$\bar X \pm t_{\alpha/2}(n - 1) s/\sqrt{n}$$
+
+If $\bar X$ were really Normal, this relationship would hold exactly (which would only occur when the $X_i$ are themselves Normal), but the rest of the time it is simply an approximation. Let's test how well it works in some specific cases.
+
+For each problem, generate 10,000 samples (each of size $n$, given below) and compute a 95\% confidence interval. Estimate the confidence coefficient (i.e., $P(\mu \in \bar X \pm t_{0.975}(19) s/\sqrt{20})$) and provide a 99\% CI for the confidence coefficient itself (use `binom.test`).
+
+### Part (a) (1 pt)
+
+Estimate the coverage rate for a 95\% two-sided confidence interval for $\theta$ (use `t.test`) from samples drawn from:
+
+$$n = 20, X_i \sim \text{Laplace}(1/2), \theta = \text{E}{X} = 1/2$$
+Use at least 1000 replications.
+
+### Answer(a)
+```{r}
+rlaplace <- function(n, theta){
+  sample(c(-1, 1), n, replace = T) * rexp(n) + theta
+}
+samples <- rerun(10000, rlaplace(20, 0.5))
+
+cis <- c()
+for(i in 1:length(samples)){
+  cis <- c(cis, t.test(samples[[i]], conf.level = 0.95)$conf.int)
+}
+
+covers <- c()
+for(i in 1:10000){
+  if(cis[2*i - 1] <= 0.5 && cis[2*i] >= 0.5){
+    covers <- c(covers, 1)
+  }
+  else {
+    covers <- c(covers, 0)
+  }
+}
+mean(covers)
+binom.test(sum(covers), length(covers), conf.level = 0.99)$conf.int
+```
+
+
+### Part (b) (1 pt)
+
+Compare two different sample sizes (see `rexp` to generate your samples). For each, estimate the coverage rate for a 95\% two-sided confidence interval for $\theta$ (use `t.test`).
+
+$$n = 20, X_i \sim \text{Exp}(2), \text{E}(X) = 1/2$$
+
+$$n = 500, X_i \sim \text{Exp}(2), \text{E}(X) = 1/2$$
+
+Notice that we are using the "rate" version of the parameter of the exponential distribution.
+
+Use at least 1000 replications for each sample size.
+
+### Answer (b)
+```{r}
+sample_20 <- rerun(10000, rexp(20, rate = 2))
+sample_500 <- rerun(10000, rexp(500, rate = 2))
+
+cis_20 <- map(sample_20, ~ t.test(.x, conf.level = 0.95)$conf.int)
+cis_500 <- map(sample_500, ~ t.test(.x, conf.level = 0.95)$conf.int)
+
+covers_20 <- map_dbl(cis_20, ~ .x[1] <= 0.5 && .x[2] >= 0.5)
+covers_500 <- map_dbl(cis_500, ~ .x[1] <= 0.5 && .x[2] >= 0.5)
+
+mean(covers_20)
+mean(covers_500)
+
+binom.test(sum(covers_20), length(covers_20), conf.level = 0.99)$conf.int  # coefficient for 20 samples covers
+binom.test(sum(covers_500), length(covers_500), conf.level = 0.99)$conf.int  # coefficient for 500 samples covers
+```
+
+We can find that the larger the sample sizes are, the more likely the means of the samples are closer to the expectation, to some extent.
+
+### Part (c) (1 pt)
+
+Interpret the estimated coverage rates for each random variable and sample size. What do these results tell us about the using the central limit theorem to approximate the sampling distribution of the sample mean?
+
+### Answer (c)
+The coverage rate shows the probability that randomly generated values are in the two-sided 95% confidence interval. When the sample size is larger, the coverage rate is comparatively higher, as problem (b) shows. When we are using the central limit theorem to approximate the sampling distribution of the sample mean, we should make the sample size as large as possible, so that the finally result would be close to the real distribution.
+
+## Problem 2 (1 pt)
+
+In class we proved that the inversion method works in the continuous case. Prove that it works in the discrete case as well. Two useful facts:
+
+- For any discrete on any domain, there is is a one-to-one mapping from that domain to the integers. So without loss of generality, we can assume all discrete RVs hav the integers as their support.
+- Let the discrete random variable $X$ be defined on the set $\mathcal{X}$. If $P(X = x) = P(Y = x)$ for all $x \in \mathcal{X}$, then $X$ and $Y$ have the same distribution. 
+
+### Answer for problem 2
+Let $X$ be a discrete random variable with the probability $P(X = x_i) = p_i\,,\ i = 1,2,\cdots,n$. Suppose that $U$ is a uniform random variable, and $0 \leq a \leq b \leq 1$, then we can get:
+$$P(a \leq U \leq b) = P(U \leq b) - P(U \leq a) = F_U(b) - F_U(a)=b-a$$
+Then we can find that for every $n$:
+$$p_n = P(p_1 +\, \cdots +p_{n-1} \leq U \leq p_1 +\, \cdots + p_n)$$
+Then let $Y = Q_X(U)$ be:
+$$Y = Q_X(U)=
+\begin{cases}
+x_1 & U \leq p_1\\
+x_2 & p_1 \leq U \leq p_1 + p_2\\
+\vdots & \vdots\\
+x_n & p_1 + \cdots +p_{n-1} \leq U \leq p_1 + \cdots + p_n
+\end{cases}
+$$
+Then $Y$ has the same distribution with $X$.
+
+
+## Problem 3 (3 pts)
+
+Recall the exponential distribution with mean $\theta^{-1}$ has density:
+$$f(x) = \theta e^{- \theta x}$$
+
+### Part (a) (1 pt)
+
+Find the quantile function of an exponential with rate parameter $\theta$.
+
+### Answer (a)
+To calculate the quantile function of an exponential, we first calculate the cumulative distribution function:
+$$F(t) = \int_0^t \theta e^{-\theta x}\ dx = -e^{-\theta x}|_0^t = 1 - e^{-\theta t} \quad \text{for}\ t > 0$$
+Then we can calculate:
+$$u = F(x) = 1-e^{-\theta x}\quad \Rightarrow \quad x = -\frac{1}{\theta}\ln(1-u)$$
+So we finally get the quantile function:
+$$Q(u) = -\frac{1}{\theta}\ln(1-u)\quad \text{for}\ \ 0 < u < 1$$
+
+### Part (b) (1 pt)
+
+You may recall that the mean and standard deviation of $\text{Exp}(\theta)$ is $\mu = \sigma = 1/\theta$. But what is the skew?
+$$\gamma = \text{E}\left[\left(\frac{X - \mu}{\sigma}\right)^3\right]$$
+Use the quantile function from (a) to sample 10,000 exponential random variables with rate parameter 2. Estimate $\gamma$ and provide a 99.9% confidence interval.
+
+```{r}
+qt <- function(n, theta) {
+  -log(1 - runif(n)) / theta
+}
+
+d <- qt(10000, 2)
+gm <- map_dbl(d, ~ mean(((.x - 0.5)/0.5)^3))
+mean(gm)
+t.test(gm, conf.level = 0.999)$conf.int
+
+```
+
+### Part (c) (1 pt)
+
+Using your results from (a) to prove that if $U \sim U(0, 1)$ then,
+$$- \frac{1}{\theta} \log(U) \sim \text{Exp}(\theta), \theta > 0$$
+(Where $\log$ is the natural logarithm as always in this class.)
+
+### Answer (c)
+$X$ is a random variable with exponential distribution, and its quantile function is $Q_X(u) = -\frac{1}{\theta}\log(1 - u)$.
+
+For a uniform random variable $U \sim \text{Uniform}(0, 1)$, the variable $Y = Q(U)$ has the same distribution with $X$.
+
+As $0 < u < 1$, we see that $0 < 1-u < 1$, so we can get that:
+$$Q(U) = -\frac{1}{\theta}log(U) \sim Exp(\theta),\ \ \theta > 0$$
+
+
+## Problem 4 (3 pts)
+
+The standard Normal distribution:
+$$f(x) = \frac{1}{\sqrt{2\pi}} \exp\{ -x^2/2 \}$$
+does not have a closed form quantile function, so it would be difficult to apply the inversion method. Instead, we can use a transformation method that still only uses $U(0,1)$ random variables.
+
+### Part (a) (1 pt)
+
+Consider two **independent** standard Normal variables $X$ and $Y$. We can think of these as points on a Cartesian plane:
+
+```{r}
+xy <- ggplot(data.frame(x = rnorm(50), y = rnorm(50)), aes(x = x, y = y)) + geom_point()
+print(xy)
+```
+
+
+We could also think about these points using **polar coordinates** based on a radius (distance from the origin) $R = \sqrt{X^2 + Y^2}$ and angle (from 0 to $2\pi$) such that $\cos(A) = X / R$ and $\sin(A) = Y / R$:
+```{r}
+xy + geom_segment(aes(xend = 0, yend = 0))
+```
+
+What is $R^2$? [Use this list of common relationships](https://en.wikipedia.org/wiki/Relationships_among_probability_distributions) to express $R^2$ as an **exponential random variable** (since exponentials can be parameterized using **rate** or **mean**, use the rate parameterization $W \sim \text{Exp}(\theta)$, $E(X) = 1/\theta$).
+
+### Answer (a)
+From the list of common relationships among probability distributions, we can find that for a standard normal random variable $X$, take its square, then $X^2$ will follow a chi-squared distribution with one degree of freedom. Thus $X^2$ and $Y^2$ both follows a chi-squared distribution with one degree of freedom. By adding $X^2$ and $Y^2$ to $X^2 + Y^2$, which equals $R^2$, we can find that $R^2$ is a chi-squared random variable with two degrees of freedom, which is the same as, exponential random variable with rate $\frac{1}{2}$. $R^2 \sim Exp(\frac{1}{2})$.
+
+### Part (b) (1 pt)
+
+Show that the joint distribution for two independent standard Normal random variables is proportional to the joint distribution for a $A \sim U(0, 2\pi)$ and the $R^2$ you found in (a), where $A$ and $R^2$ are independent. 
+
+### Answer (b)
+For two independent standard Normal random variable $X$ and $Y$, the joint distribution function is:
+$$\int_{-\infty}^y \int_{-\infty}^x(\frac{1}{\sqrt{2\pi}}e^{-\frac{x^2}{2}})(\frac{1}{\sqrt{2\pi}}e^{-\frac{x^2}{2}})\ dxdy
+= \frac{1}{2\pi}\int_{-\infty}^y \int_{-\infty}^xe^{-\frac{x^2 + y^2}{2}}\ dxdy
+$$
+For $A \sim U(0, 2\pi)$ and $R^2 \sim Exp(\frac{1}{2})$, as $A$ and $R^2$ are independent, the joint distribution function is:
+$$
+\int_0^r \int_0^x \frac{1}{2\pi}\cdot \frac{1}{2}e^{-\frac{r}{2}}\ dxdr = \frac{1}{4\pi} \int_0^r \int_0^x e^{-\frac{r}{2}}\ dxdr\\
+$$
+Let the $r$ transform into $x^2 + y^2$ as in exponential distribution, $r \geq 0$, thus we can prove that the joint distribution for two independent standard Normal random variables is proportional to the joint distribution for $A \sim U(0, 2\pi)$ and $R^2$, which are independent.
+
+### Part (c) (1 pt)
+
+Use the result from 3(c) that $-(1/\theta) \log(U) \sim \text{Exp}(\theta)$ along with the identity $X = R \cos(A)$ to show how to generate one standard Normal random variable from two independent $U(0,1)$ random variables. (Interesting note, you can also use $Y = R \sin(A)$ to get a second standard Normal, which is also independent, but this is not necessary to show.)
+
+Implement your method in R. Demonstrate your results using a quantile-quantile plot (replacing `rnorm` with your solution.)
+
+```{r}
+ggplot(data.frame(x = rnorm(10000)), aes(sample = x)) + geom_qq() + geom_qq_line()
+```
+
+### Answer (c)
+For the identity $X = R \cos(A)$, we can take the square of both sides to get $X^2 = R^2 \cos^2(A)$. As $R^2$ follows an exponential distribution with rate $\frac{1}{2}$, thus we can transform the relationship into $R^2 \sim -\frac{1}{\theta} \log(U)$ where $\theta = \frac{1}{2}$.
+
+For $X^2$, we can use $-\frac{1}{\theta} \log(U) \cdot \cos^2(U)$ to calculate its distribution. After that, we take the square root, and we will get the approximate distribution for $X$ as standard Normal.
+
+```{r}
+sn <- function(n) {
+  sqrt(-2*log(runif(n)) * cos(runif(n))^2)
+}
+
+ggplot(data.frame(x = sn(10000)), aes(sample = x)) + geom_qq() + geom_qq_line()
+```
